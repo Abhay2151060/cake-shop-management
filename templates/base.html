@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ settings.theme if settings and settings.theme else 'light' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ settings.shop_name if settings else 'Cherry Blossom' }}{% endblock %} | Cake Shop ERP</title>
+  
+  <!-- Fast Anti-Flicker Check for Minimized Sidebar -->
+  <script>
+    if (localStorage.getItem('sidebar_collapsed') === 'true') {
+      document.documentElement.classList.add('sidebar-collapsed');
+      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('sidebar-collapsed'));
+    }
+  </script>
+
+  <!-- CSS & Fonts -->
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" type="image/png" href="/static/logo.png">
+  
+  <!-- Chart.js & SweetAlert2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar no-print" id="appSidebar">
+      <div class="sidebar-header">
+        <img src="/static/logo.png" alt="Cherry Blossom Logo" class="sidebar-logo-img">
+      </div>
+
+      <nav class="sidebar-nav">
+        {% if user and user.role == 'owner' %}
+          <!-- Owner Navigation -->
+          <div class="nav-section-title">Core Management</div>
+          <a href="/dashboard" class="nav-item {% if request.url.path == '/dashboard' %}active{% endif %}" data-title="Dashboard">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span class="nav-text">Dashboard</span>
+          </a>
+          <a href="/orders/pos" class="nav-item {% if request.url.path == '/orders/pos' %}active{% endif %}" data-title="New Order (POS)">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            <span class="nav-text">New Order (POS)</span>
+          </a>
+
+          <div class="nav-section-title">Orders & Sales</div>
+          <a href="/orders" class="nav-item {% if request.url.path == '/orders' %}active{% endif %}" data-title="All Orders">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <span class="nav-text">All Orders</span>
+          </a>
+          <a href="/orders/current" class="nav-item {% if request.url.path == '/orders/current' %}active{% endif %}" data-title="Current Queue">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="nav-text">Current Queue</span>
+          </a>
+          <a href="/payments/pending" class="nav-item {% if request.url.path == '/payments/pending' %}active{% endif %}" data-title="Pending (Udhaar)">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="nav-text">Pending (Udhaar)</span>
+          </a>
+          <a href="/custom-cakes" class="nav-item {% if request.url.path.startswith('/custom-cakes') %}active{% endif %}" data-title="Custom Cakes">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z"/></svg>
+            <span class="nav-text">Custom Cakes</span>
+          </a>
+
+          <div class="nav-section-title">Catalog & Stock</div>
+          <a href="/products" class="nav-item {% if request.url.path == '/products' %}active{% endif %}" data-title="Products">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <span class="nav-text">Products</span>
+          </a>
+          <a href="/categories" class="nav-item {% if request.url.path == '/categories' %}active{% endif %}" data-title="Categories">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+            <span class="nav-text">Categories</span>
+          </a>
+          <a href="/inventory" class="nav-item {% if request.url.path == '/inventory' %}active{% endif %}" data-title="Inventory">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            <span class="nav-text">Inventory</span>
+          </a>
+
+          <div class="nav-section-title">Administration</div>
+          <a href="/reports" class="nav-item {% if request.url.path == '/reports' %}active{% endif %}" data-title="Reports & Analytics">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span class="nav-text">Reports & Analytics</span>
+          </a>
+          <a href="/staff" class="nav-item {% if request.url.path == '/staff' %}active{% endif %}" data-title="Staff Management">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <span class="nav-text">Staff Management</span>
+          </a>
+          <a href="/audit-logs" class="nav-item {% if request.url.path == '/audit-logs' %}active{% endif %}" data-title="Audit Logs">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span class="nav-text">Audit Logs</span>
+          </a>
+          <a href="/settings" class="nav-item {% if request.url.path == '/settings' %}active{% endif %}" data-title="Shop Settings">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span class="nav-text">Shop Settings</span>
+          </a>
+
+        {% else %}
+          <!-- Staff Navigation -->
+          <div class="nav-section-title">POS & Counter</div>
+          <a href="/dashboard" class="nav-item {% if request.url.path == '/dashboard' %}active{% endif %}" data-title="Staff Dashboard">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span class="nav-text">Staff Dashboard</span>
+          </a>
+          <a href="/orders/pos" class="nav-item {% if request.url.path == '/orders/pos' %}active{% endif %}" data-title="New Order (POS)">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            <span class="nav-text">New Order (POS)</span>
+          </a>
+          <a href="/orders/current" class="nav-item {% if request.url.path == '/orders/current' %}active{% endif %}" data-title="Active Queue">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="nav-text">Active Orders Queue</span>
+          </a>
+          <a href="/custom-cakes/create" class="nav-item {% if request.url.path == '/custom-cakes/create' %}active{% endif %}" data-title="Book Custom Cake">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            <span class="nav-text">Book Custom Cake</span>
+          </a>
+          <a href="/custom-cakes" class="nav-item {% if request.url.path == '/custom-cakes' %}active{% endif %}" data-title="Custom Cakes List">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z"/></svg>
+            <span class="nav-text">Custom Cakes List</span>
+          </a>
+          <a href="/orders" class="nav-item {% if request.url.path == '/orders' %}active{% endif %}" data-title="Order History">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <span class="nav-text">Order History</span>
+          </a>
+        {% endif %}
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-badge">
+          <div class="user-avatar">{{ user.name[0] if user else 'U' }}</div>
+          <div class="user-meta">
+            <div style="font-weight: 700; font-size: 0.88rem; color: #fff;">{{ user.name if user else 'Guest' }}</div>
+            <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">{{ user.role if user else '' }}</div>
+          </div>
+        </div>
+        <a href="/logout" title="Logout" style="color: #ef4444; padding: 6px;">
+          <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      
+      <!-- Top Navbar -->
+      <header class="top-navbar no-print">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <!-- Sidebar Toggle Button -->
+          <button type="button" id="sidebarToggleBtn" class="btn btn-secondary btn-sm" title="Minimize / Expand Sidebar" onclick="toggleSidebar()" style="padding: 6px 10px;">
+            <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+            </svg>
+          </button>
+          
+          <h2 style="font-size: 1.25rem;">{% block page_title %}Dashboard{% endblock %}</h2>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 14px;">
+          
+          <!-- Theme Switcher -->
+          <form action="/settings/theme-toggle" method="POST" style="margin: 0;">
+            <button type="submit" class="btn btn-secondary btn-sm" title="Toggle Light/Dark Theme">
+              <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            </button>
+          </form>
+
+          <!-- Quick Action POS -->
+          <a href="/orders/pos" class="btn btn-cherry btn-sm">
+            <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            New Order (POS)
+          </a>
+
+          <!-- Profile Link -->
+          <a href="/profile" class="btn btn-secondary btn-sm" title="My Profile">
+            <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            Profile
+          </a>
+        </div>
+      </header>
+
+      <!-- Page Flash Alerts -->
+      <div class="page-content">
+        {% if message or request.query_params.get('message') %}
+          <div style="background-color: var(--success-light); color: var(--success); border: 1px solid rgba(16,185,129,0.3); padding: 12px 18px; border-radius: var(--radius-sm); margin-bottom: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            {{ message or request.query_params.get('message') }}
+          </div>
+        {% endif %}
+
+        {% if error or request.query_params.get('error') %}
+          <div style="background-color: var(--danger-light); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); padding: 12px 18px; border-radius: var(--radius-sm); margin-bottom: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            {{ error or request.query_params.get('error') }}
+          </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebar_collapsed', isCollapsed);
+    }
+
+    // Global Custom Branded Popups (No browser localhost dialogs!)
+    window.showToast = function(title, icon = 'success') {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: {
+          popup: 'cherry-swal-toast'
+        },
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+      return Toast.fire({
+        icon: icon,
+        title: title
+      });
+    };
+
+    window.showCustomAlert = function(title, text, icon = 'info') {
+      return Swal.fire({
+        title: title,
+        html: text,
+        icon: icon,
+        confirmButtonText: 'OK',
+        customClass: {
+          popup: 'cherry-swal-popup',
+          confirmButton: 'btn btn-primary'
+        },
+        buttonsStyling: false
+      });
+    };
+
+    window.showCustomConfirm = async function(title, text, confirmText = 'Yes, Proceed', cancelText = 'Cancel', icon = 'warning', isDanger = false) {
+      const result = await Swal.fire({
+        title: title,
+        html: text,
+        icon: icon,
+        showCancelButton: true,
+        confirmButtonText: confirmText,
+        cancelButtonText: cancelText,
+        customClass: {
+          popup: 'cherry-swal-popup',
+          confirmButton: isDanger ? 'btn btn-cherry' : 'btn btn-primary',
+          cancelButton: 'btn btn-secondary'
+        },
+        buttonsStyling: false
+      });
+      return result.isConfirmed;
+    };
+
+    // Override browser default alert to prevent any "localhost says" popups
+    window.alert = function(message) {
+      showCustomAlert('Notification', message, 'info');
+    };
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

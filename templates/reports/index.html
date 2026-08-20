@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Analytics - {{ settings.shop_name }}{% endblock %}
+{% block page_title %}Business Intelligence & Reports{% endblock %}
+
+{% block content %}
+<!-- Top Filter Bar -->
+<div class="card-panel" style="margin-bottom: 20px;">
+  <div class="card-panel-body" style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+    
+    <!-- Time Period Filter Form -->
+    <form method="GET" action="/reports" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <input type="hidden" name="tab" value="{{ tab }}">
+      
+      <div style="display: flex; gap: 4px; background: var(--bg-main); padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+        <button type="submit" name="period" value="today" class="btn {% if period == 'today' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Today</button>
+        <button type="submit" name="period" value="yesterday" class="btn {% if period == 'yesterday' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Yesterday</button>
+        <button type="submit" name="period" value="week" class="btn {% if period == 'week' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">This Week</button>
+        <button type="submit" name="period" value="month" class="btn {% if period == 'month' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">This Month</button>
+      </div>
+
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date }}" style="width: 140px;">
+        <span>to</span>
+        <input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date }}" style="width: 140px;">
+        <button type="submit" name="period" value="custom" class="btn btn-secondary btn-sm">Apply Dates</button>
+      </div>
+    </form>
+
+    <!-- Export Actions -->
+    <div style="display: flex; gap: 8px;">
+      <a href="/reports/export/csv?report_type={{ tab }}&period={{ period }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-secondary btn-sm" title="Export current report as CSV">
+        📄 Export CSV
+      </a>
+      <a href="/reports/export/excel?report_type={{ tab }}&period={{ period }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-primary btn-sm" title="Export formatted Excel file">
+        📊 Export Excel (.xlsx)
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<!-- Report Category Tabs -->
+<div style="display: flex; gap: 8px; margin-bottom: 20px;">
+  <a href="/reports?tab=sales&period={{ period }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn {% if tab == 'sales' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+    💰 Sales Report
+  </a>
+  <a href="/reports?tab=products&period={{ period }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn {% if tab == 'products' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+    🎂 Product Performance
+  </a>
+  <a href="/reports?tab=inventory&period={{ period }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn {% if tab == 'inventory' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+    📦 Inventory Valuation
+  </a>
+</div>
+
+{% if tab == 'sales' %}
+  <!-- Sales Financial Summary Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--card-accent: #2563eb;">
+      <div>
+        <div class="kpi-title">Net Sales (Revenue)</div>
+        <div class="kpi-value">₹{{ '{:,.2f}'.format(summary.net_sales) }}</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">{{ summary.total_orders }} orders placed</div>
+      </div>
+    </div>
+
+    <div class="kpi-card" style="--card-accent: #10b981;">
+      <div>
+        <div class="kpi-title">Cash Collection</div>
+        <div class="kpi-value">₹{{ '{:,.2f}'.format(summary.cash_collected) }}</div>
+        <div style="font-size: 0.78rem; color: #10b981; font-weight: 600; margin-top: 4px;">Direct physical cash</div>
+      </div>
+    </div>
+
+    <div class="kpi-card" style="--card-accent: #0284c7;">
+      <div>
+        <div class="kpi-title">UPI Collection</div>
+        <div class="kpi-value">₹{{ '{:,.2f}'.format(summary.upi_collected) }}</div>
+        <div style="font-size: 0.78rem; color: #0284c7; font-weight: 600; margin-top: 4px;">QR scan payments</div>
+      </div>
+    </div>
+
+    <div class="kpi-card" style="--card-accent: #f59e0b;">
+      <div>
+        <div class="kpi-title">Pending Due in Period</div>
+        <div class="kpi-value" style="color: #d97706;">₹{{ '{:,.2f}'.format(summary.pending) }}</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Credit / Udhaar balance</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Sales Orders Table -->
+  <div class="card-panel">
+    <div class="card-panel-header">
+      <div class="card-panel-title">
+        <span>Orders Ledger ({{ summary.start_formatted }} - {{ summary.end_formatted }})</span>
+      </div>
+    </div>
+    <div class="card-panel-body" style="padding: 0;">
+      {% if orders %}
+        <div class="table-responsive">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Date & Time</th>
+                <th>Customer</th>
+                <th>Subtotal</th>
+                <th>Discount</th>
+                <th>Grand Total</th>
+                <th>Paid</th>
+                <th>Pending</th>
+                <th>Payment Mode</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ord in orders %}
+                <tr>
+                  <td><a href="/orders/{{ ord.id }}" style="font-weight: 700; color: var(--primary);">{{ ord.order_number }}</a></td>
+                  <td style="font-size: 0.82rem; color: var(--text-muted);">{{ ord.created_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                  <td>{{ ord.customer_name }}</td>
+                  <td>₹{{ '{:,.2f}'.format(ord.subtotal) }}</td>
+                  <td style="color: var(--danger);">-₹{{ '{:,.2f}'.format(ord.discount) }}</td>
+                  <td style="font-weight: 800;">₹{{ '{:,.2f}'.format(ord.grand_total) }}</td>
+                  <td style="color: var(--success); font-weight: 600;">₹{{ '{:,.2f}'.format(ord.paid_amount) }}</td>
+                  <td style="color: {% if ord.pending_amount > 0 %}#d97706{% else %}var(--text-muted){% endif %};">
+                    ₹{{ '{:,.2f}'.format(ord.pending_amount) }}
+                  </td>
+                  <td><span class="badge badge-active">{{ ord.payment_method.upper() }}</span></td>
+                  <td><span class="badge badge-{{ ord.order_status }}">{{ ord.order_status.title() }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="padding: 40px; text-align: center; color: var(--text-muted);">No sales recorded in selected period.</div>
+      {% endif %}
+    </div>
+  </div>
+
+{% elif tab == 'products' %}
+  <!-- Product Performance Table -->
+  <div class="card-panel">
+    <div class="card-panel-header">
+      <div class="card-panel-title">Product Sales Performance Ranking</div>
+    </div>
+    <div class="card-panel-body" style="padding: 0;">
+      {% if product_stats %}
+        <div class="table-responsive">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Product Name</th>
+                <th>Quantity Sold</th>
+                <th>Total Revenue Generated</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in product_stats %}
+                <tr>
+                  <td><strong>#{{ loop.index }}</strong></td>
+                  <td style="font-weight: 700; font-size: 0.95rem;">{{ row[0] }}</td>
+                  <td>
+                    <span class="badge badge-active" style="font-size: 0.85rem;">{{ row[1] }} units sold</span>
+                  </td>
+                  <td style="font-weight: 800; font-size: 1.05rem; color: var(--primary);">
+                    ₹{{ '{:,.2f}'.format(row[2]) }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="padding: 40px; text-align: center; color: var(--text-muted);">No product sales data in this period.</div>
+      {% endif %}
+    </div>
+  </div>
+
+{% elif tab == 'inventory' %}
+  <!-- Inventory Status Table -->
+  <div class="card-panel">
+    <div class="card-panel-header">
+      <div class="card-panel-title">Current Inventory & Ingredient Valuation</div>
+    </div>
+    <div class="card-panel-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Item Name</th>
+              <th>Category / Type</th>
+              <th>Current Stock</th>
+              <th>Min Alert</th>
+              <th>Unit Cost (₹)</th>
+              <th>Stock Value (Est.)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in inventory_items %}
+              <tr>
+                <td style="font-weight: 700;">{{ item.name }}</td>
+                <td style="text-transform: uppercase; font-size: 0.8rem; color: var(--text-muted);">{{ item.item_type.replace('_', ' ') }}</td>
+                <td><strong>{{ item.current_qty }} {{ item.unit }}</strong></td>
+                <td style="color: var(--text-muted);">{{ item.min_qty }} {{ item.unit }}</td>
+                <td>₹{{ '{:,.2f}'.format(item.purchase_price) }}</td>
+                <td style="font-weight: 700;">₹{{ '{:,.2f}'.format(item.current_qty * item.purchase_price) }}</td>
+                <td>
+                  <span class="badge {% if item.is_low_stock %}badge-low_stock{% else %}badge-active{% endif %}">
+                    {{ 'Low Stock' if item.is_low_stock else 'Adequate' }}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

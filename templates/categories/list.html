@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Categories - {{ settings.shop_name }}{% endblock %}
+{% block page_title %}Cake Categories Management{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+  <div class="card-panel-header">
+    <div class="card-panel-title">
+      <svg style="width: 20px; height: 20px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+      All Cake Categories ({{ categories|length }})
+    </div>
+
+    {% if user and user.role == 'owner' %}
+      <button type="button" class="btn btn-primary" onclick="openAddCategoryModal()">
+        <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Add Category
+      </button>
+    {% endif %}
+  </div>
+
+  <div class="card-panel-body" style="padding: 0;">
+    {% if categories %}
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Category Name</th>
+              <th>Description</th>
+              <th>Product Count</th>
+              <th>Status</th>
+              {% if user and user.role == 'owner' %}
+                <th style="text-align: right;">Actions</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for cat in categories %}
+              <tr>
+                <td><code>#{{ cat.id }}</code></td>
+                <td><div style="font-weight: 700; font-size: 0.95rem;">{{ cat.name }}</div></td>
+                <td style="color: var(--text-muted); font-size: 0.85rem;">{{ cat.description or '-' }}</td>
+                <td>
+                  <span class="badge badge-active" style="font-size: 0.8rem;">
+                    {{ cat_counts[cat.id] }} products
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-{{ cat.status }}">{{ cat.status.title() }}</span>
+                </td>
+                {% if user and user.role == 'owner' %}
+                  <td style="text-align: right;">
+                    <div style="display: inline-flex; gap: 6px;">
+                      <button type="button" class="btn btn-secondary btn-sm" onclick='openEditCategoryModal({{ cat.id }}, "{{ cat.name|replace("\"", "\\\"") }}", "{{ cat.description or "" }}", "{{ cat.status }}")'>
+                        Edit
+                      </button>
+                      <form action="/categories/{{ cat.id }}/toggle-status" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-sm" title="Toggle active status">
+                          {{ 'Deactivate' if cat.status == 'active' else 'Activate' }}
+                        </button>
+                      </form>
+                      <form action="/categories/{{ cat.id }}/delete" method="POST" style="display: inline;" onsubmit="confirmDeleteCategory(event, this);">
+                        <button type="submit" class="btn btn-secondary btn-sm" style="color: var(--danger);" title="Delete category">
+                          Delete
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 40px; text-align: center; color: var(--text-muted);">No categories created yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal: Add Category -->
+<div class="modal-backdrop" id="addCategoryModal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem;">Add New Cake Category</h3>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddCategoryModal()">✕</button>
+    </div>
+    <form action="/categories/create" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="add_cat_name">Category Name *</label>
+          <input type="text" id="add_cat_name" name="name" class="form-control" placeholder="e.g. Wedding Cakes" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="add_cat_desc">Description</label>
+          <textarea id="add_cat_desc" name="description" class="form-control" rows="3" placeholder="Brief description of this category"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeAddCategoryModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Edit Category -->
+<div class="modal-backdrop" id="editCategoryModal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem;">Edit Category</h3>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditCategoryModal()">✕</button>
+    </div>
+    <form id="editCategoryForm" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="edit_cat_name">Category Name *</label>
+          <input type="text" id="edit_cat_name" name="name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_cat_desc">Description</label>
+          <textarea id="edit_cat_desc" name="description" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_cat_status">Status</label>
+          <select id="edit_cat_status" name="status" class="form-select">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditCategoryModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openAddCategoryModal() {
+  document.getElementById('addCategoryModal').style.display = 'flex';
+}
+function closeAddCategoryModal() {
+  document.getElementById('addCategoryModal').style.display = 'none';
+}
+
+function openEditCategoryModal(id, name, desc, status) {
+  document.getElementById('editCategoryForm').action = `/categories/${id}/update`;
+  document.getElementById('edit_cat_name').value = name;
+  document.getElementById('edit_cat_desc').value = desc;
+  document.getElementById('edit_cat_status').value = status;
+  document.getElementById('editCategoryModal').style.display = 'flex';
+}
+function closeEditCategoryModal() {
+  document.getElementById('editCategoryModal').style.display = 'none';
+}
+
+async function confirmDeleteCategory(event, form) {
+  event.preventDefault();
+  const confirmed = await showCustomConfirm(
+    "Delete Category?",
+    "Are you sure you want to delete this category? (Only categories without attached products can be deleted).",
+    "Yes, Delete",
+    "Cancel",
+    "warning",
+    true
+  );
+  if (confirmed) {
+    form.submit();
+  }
+}
+</script>
+{% endblock %}

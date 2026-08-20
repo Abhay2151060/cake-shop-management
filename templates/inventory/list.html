@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory Management - {{ settings.shop_name }}{% endblock %}
+{% block page_title %}Shop Inventory & Stock Movements{% endblock %}
+
+{% block content %}
+<!-- Tab Selector -->
+<div style="display: flex; gap: 8px; margin-bottom: 20px;">
+  <a href="/inventory?tab=items" class="btn {% if tab != 'transactions' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+    📦 Stock Items ({{ items|length }})
+  </a>
+  <a href="/inventory?tab=transactions" class="btn {% if tab == 'transactions' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+    📝 Stock Movement History ({{ transactions|length }})
+  </a>
+</div>
+
+{% if tab != 'transactions' %}
+  <!-- Inventory Items Panel -->
+  <div class="card-panel">
+    <div class="card-panel-header" style="flex-wrap: wrap; gap: 12px;">
+      
+      <!-- Filter Form -->
+      <form method="GET" action="/inventory" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex: 1;">
+        <input type="hidden" name="tab" value="items">
+        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search item or supplier..." value="{{ search }}" style="width: 220px;">
+        
+        <select name="type_filter" class="form-select form-select-sm" style="width: 170px;">
+          <option value="">All Item Types</option>
+          <option value="raw_material" {% if type_filter == 'raw_material' %}selected{% endif %}>Raw Ingredients</option>
+          <option value="packaging" {% if type_filter == 'packaging' %}selected{% endif %}>Boxes & Packaging</option>
+          <option value="accessory" {% if type_filter == 'accessory' %}selected{% endif %}>Candles & Acc.</option>
+          <option value="finished_cake" {% if type_filter == 'finished_cake' %}selected{% endif %}>Finished Cakes</option>
+        </select>
+
+        <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+        {% if search or type_filter %}
+          <a href="/inventory" class="btn btn-secondary btn-sm">Reset</a>
+        {% endif %}
+      </form>
+
+      {% if user and user.role == 'owner' %}
+        <button type="button" class="btn btn-primary" onclick="openAddInvModal()">
+          <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Add Inventory Item
+        </button>
+      {% endif %}
+    </div>
+
+    <div class="card-panel-body" style="padding: 0;">
+      {% if items %}
+        <div class="table-responsive">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th>Type</th>
+                <th>Current Stock</th>
+                <th>Min Alert</th>
+                <th>Unit Price</th>
+                <th>Supplier</th>
+                <th>Status</th>
+                {% if user and user.role == 'owner' %}
+                  <th style="text-align: right;">Stock Action</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for itm in items %}
+                <tr>
+                  <td>
+                    <div style="font-weight: 700;">{{ itm.name }}</div>
+                  </td>
+                  <td>
+                    <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">
+                      {{ itm.item_type.replace('_', ' ') }}
+                    </span>
+                  </td>
+                  <td>
+                    <strong style="font-size: 1.05rem; color: {% if itm.is_low_stock %}var(--danger){% else %}var(--text-main){% endif %};">
+                      {{ itm.current_qty }} {{ itm.unit }}
+                    </strong>
+                    {% if itm.is_low_stock %}
+                      <span class="badge badge-low_stock" style="margin-left: 6px; font-size: 0.68rem;">Low Stock</span>
+                    {% endif %}
+                  </td>
+                  <td style="color: var(--text-muted);">{{ itm.min_qty }} {{ itm.unit }}</td>
+                  <td>₹{{ '{:,.2f}'.format(itm.purchase_price) }}</td>
+                  <td style="font-size: 0.85rem; color: var(--text-muted);">{{ itm.supplier or '-' }}</td>
+                  <td><span class="badge badge-{{ itm.status }}">{{ itm.status.title() }}</span></td>
+                  {% if user and user.role == 'owner' %}
+                    <td style="text-align: right;">
+                      <button type="button" class="btn btn-primary btn-sm" onclick='openStockActionModal({{ itm.id }}, "{{ itm.name|replace("\"", "\\\"") }}", {{ itm.current_qty }}, "{{ itm.unit }}")'>
+                        ⚡ Quick Adjust
+                      </button>
+                    </td>
+                  {% endif %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="padding: 40px; text-align: center; color: var(--text-muted);">No inventory items found.</div>
+      {% endif %}
+    </div>
+  </div>
+
+{% else %}
+  <!-- Stock Movement Transactions Panel -->
+  <div class="card-panel">
+    <div class="card-panel-header">
+      <div class="card-panel-title">Recent Inventory Transactions Log</div>
+    </div>
+    <div class="card-panel-body" style="padding: 0;">
+      {% if transactions %}
+        <div class="table-responsive">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Item</th>
+                <th>Action Type</th>
+                <th>Qty Changed</th>
+                <th>Prev Stock</th>
+                <th>New Stock</th>
+                <th>Reason / Notes</th>
+                <th>User</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tx in transactions %}
+                <tr>
+                  <td style="font-size: 0.82rem; color: var(--text-muted);">{{ tx.created_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                  <td style="font-weight: 700;">{{ tx.item.name if tx.item else 'Unknown' }}</td>
+                  <td>
+                    {% if tx.transaction_type == 'stock_in' %}
+                      <span class="badge badge-paid">Stock In</span>
+                    {% elif tx.transaction_type == 'stock_out' %}
+                      <span class="badge badge-cancelled">Stock Out</span>
+                    {% else %}
+                      <span class="badge badge-partially_paid">Adjustment</span>
+                    {% endif %}
+                  </td>
+                  <td style="font-weight: 700;">
+                    {% if tx.transaction_type == 'stock_in' %}+{% elif tx.transaction_type == 'stock_out' %}-{% endif %}{{ tx.quantity }}
+                  </td>
+                  <td>{{ tx.prev_qty }}</td>
+                  <td><strong>{{ tx.new_qty }}</strong></td>
+                  <td style="font-size: 0.85rem; color: var(--text-muted);">{{ tx.reason or '-' }}</td>
+                  <td>{{ tx.actor.name if tx.actor else 'System' }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="padding: 40px; text-align: center; color: var(--text-muted);">No transactions recorded yet.</div>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+
+<!-- Modal: Add Inventory Item -->
+<div class="modal-backdrop" id="addInvModal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem;">Add Inventory Item</h3>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddInvModal()">✕</button>
+    </div>
+    <form action="/inventory/create" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="inv_name">Item Name *</label>
+          <input type="text" id="inv_name" name="name" class="form-control" placeholder="e.g. Whipped Dairy Cream" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="inv_type">Item Type</label>
+            <select id="inv_type" name="item_type" class="form-select">
+              <option value="raw_material">Raw Ingredient</option>
+              <option value="packaging">Box & Packaging</option>
+              <option value="accessory">Candle / Accessory</option>
+              <option value="finished_cake">Finished Cake</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="inv_unit">Measurement Unit</label>
+            <select id="inv_unit" name="unit" class="form-select">
+              <option value="KG">Kilogram (KG)</option>
+              <option value="Gram">Gram</option>
+              <option value="Litre">Litre</option>
+              <option value="Piece">Piece</option>
+              <option value="Box">Box</option>
+              <option value="Packet">Packet</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="inv_cqty">Initial Quantity</label>
+            <input type="number" id="inv_cqty" name="current_qty" class="form-control" value="10" min="0" step="0.5" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="inv_mqty">Min Stock Alert</label>
+            <input type="number" id="inv_mqty" name="min_qty" class="form-control" value="5" min="0" step="0.5" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="inv_price">Cost Price (₹)</label>
+            <input type="number" id="inv_price" name="purchase_price" class="form-control" value="100" min="0" step="10">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inv_supplier">Supplier Name</label>
+          <input type="text" id="inv_supplier" name="supplier" class="form-control" placeholder="e.g. Amul Dairy Wholesale">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeAddInvModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Item</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Stock Movement Action -->
+<div class="modal-backdrop" id="stockActionModal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem;" id="stockActionTitle">Update Stock</h3>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeStockActionModal()">✕</button>
+    </div>
+    <form id="stockActionForm" method="POST">
+      <div class="modal-body">
+        
+        <div style="background: var(--bg-main); padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+          <div style="font-size: 0.8rem; color: var(--text-muted);">Current Available Stock: <strong id="stockActionCurrentQty" style="color: var(--text-main); font-size: 1.1rem;">0</strong></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Action Type</label>
+          <select name="action_type" class="form-select" id="stockActionTypeSelect">
+            <option value="stock_in">📥 Stock In (Receive New Stock)</option>
+            <option value="stock_out">📤 Stock Out (Usage / Wastage)</option>
+            <option value="adjustment">🔄 Set Exact New Quantity</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" id="stockQtyLabel">Quantity to Add / Remove *</label>
+          <input type="number" name="quantity" class="form-control form-control-lg" min="0.1" step="0.5" value="5" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reason / Notes</label>
+          <input type="text" name="reason" class="form-control" placeholder="e.g. Received weekly wholesale batch">
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeStockActionModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Confirm Stock Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openAddInvModal() {
+  document.getElementById('addInvModal').style.display = 'flex';
+}
+function closeAddInvModal() {
+  document.getElementById('addInvModal').style.display = 'none';
+}
+
+function openStockActionModal(id, name, currentQty, unit) {
+  document.getElementById('stockActionForm').action = `/inventory/${id}/stock-action`;
+  document.getElementById('stockActionTitle').innerText = `Stock Adjustment: ${name}`;
+  document.getElementById('stockActionCurrentQty').innerText = `${currentQty} ${unit}`;
+  document.getElementById('stockActionModal').style.display = 'flex';
+}
+function closeStockActionModal() {
+  document.getElementById('stockActionModal').style.display = 'none';
+}
+</script>
+{% endblock %}

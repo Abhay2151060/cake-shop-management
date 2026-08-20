@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Active Orders Queue - {{ settings.shop_name }}{% endblock %}
+{% block page_title %}Active Order Queue & Kitchen Prep{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+  <div class="card-panel-header">
+    <div class="card-panel-title">
+      <svg style="width: 20px; height: 20px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Live In-Progress Orders ({{ orders|length }})
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <a href="/orders/pos" class="btn btn-primary btn-sm">+ New Order</a>
+    </div>
+  </div>
+
+  <div class="card-panel-body">
+    {% if orders %}
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px;">
+        {% for ord in orders %}
+          <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px;">
+            
+            <!-- Card Header -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <a href="/orders/{{ ord.id }}" style="font-weight: 800; font-size: 1.1rem; color: var(--primary); text-decoration: underline;">
+                  {{ ord.order_number }}
+                </a>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                  Customer: <strong>{{ ord.customer_name }}</strong>
+                </div>
+              </div>
+              <span class="badge badge-{{ ord.order_status }}">{{ ord.order_status.title() }}</span>
+            </div>
+
+            <!-- Items List -->
+            <div style="background: var(--bg-card); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+              <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Order Items:</div>
+              <ul style="list-style: none; font-size: 0.88rem; display: flex; flex-direction: column; gap: 4px;">
+                {% for item in ord.items %}
+                  <li style="display: flex; justify-content: space-between;">
+                    <span><strong>{{ item.quantity }}×</strong> {{ item.product_name }}</span>
+                    <span style="color: var(--text-muted);">{{ item.size_weight or '' }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+              {% if ord.notes %}
+                <div style="font-size: 0.8rem; color: #b45309; background: var(--warning-light); padding: 4px 8px; border-radius: 4px; margin-top: 8px;">
+                  ⚠️ Note: {{ ord.notes }}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Footer & Status Controls -->
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 10px;">
+                <span>Total: <strong>₹{{ '{:,.2f}'.format(ord.grand_total) }}</strong></span>
+                <span class="badge badge-{{ ord.payment_status }}">{{ ord.payment_status.replace('_', ' ').title() }}</span>
+              </div>
+
+              <!-- Quick Status Progression Buttons -->
+              <div style="display: flex; gap: 6px;">
+                {% if ord.order_status == 'new' %}
+                  <button type="button" class="btn btn-primary btn-sm" style="flex: 1;" onclick="changeOrderStatus({{ ord.id }}, 'confirmed')">
+                    Confirm Order &rarr;
+                  </button>
+                {% elif ord.order_status == 'confirmed' %}
+                  <button type="button" class="btn btn-secondary btn-sm" style="flex: 1; background: #e0f2fe; color: #0284c7;" onclick="changeOrderStatus({{ ord.id }}, 'preparing')">
+                    Start Baking / Prep &rarr;
+                  </button>
+                {% elif ord.order_status == 'preparing' %}
+                  <button type="button" class="btn btn-secondary btn-sm" style="flex: 1; background: #fdf4ff; color: #9333ea;" onclick="changeOrderStatus({{ ord.id }}, 'ready')">
+                    Mark as Ready &rarr;
+                  </button>
+                {% elif ord.order_status == 'ready' %}
+                  <button type="button" class="btn btn-primary btn-sm" style="flex: 1; background: #10b981; border-color: #10b981;" onclick="changeOrderStatus({{ ord.id }}, 'completed')">
+                    Handover & Complete ✓
+                  </button>
+                {% endif %}
+
+                <button type="button" class="btn btn-secondary btn-sm" onclick="changeOrderStatus({{ ord.id }}, 'cancelled')" style="color: var(--danger);" title="Cancel order">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="padding: 50px; text-align: center; color: var(--text-muted);">
+        <svg style="width: 48px; height: 48px; opacity: 0.4; margin-bottom: 10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <h3>Queue is clear!</h3>
+        <p style="font-size: 0.9rem; margin-top: 4px;">All walk-in orders are currently completed.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+async function changeOrderStatus(orderId, newStatus) {
+  if (newStatus === 'cancelled') {
+    const confirmed = await showCustomConfirm(
+      "Cancel Order?",
+      "Are you sure you want to cancel this order? This action will mark it cancelled in the system.",
+      "Yes, Cancel Order",
+      "Keep Order",
+      "warning",
+      true
+    );
+    if (!confirmed) return;
+  }
+  try {
+    const res = await fetch(`/orders/api/${orderId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast("Order status updated to " + newStatus);
+      setTimeout(() => window.location.reload(), 600);
+    } else {
+      showCustomAlert("Update Failed", result.error || "Unable to update status", "error");
+    }
+  } catch (err) {
+    showCustomAlert("Connection Error", err.message || "Network error", "error");
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ settings.theme if settings and settings.theme else 'light' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | {{ settings.shop_name if settings else 'Cherry Blossom Cake Shop' }}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" type="image/png" href="/static/logo.png">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+
+  <div style="width: 100%; max-width: 440px; padding: 20px;">
+    <div style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 36px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 1px solid var(--border-color);">
+      
+      <!-- Brand Logo -->
+      <div style="text-align: center; margin-bottom: 24px;">
+        <img src="/static/logo.png" alt="Cherry Blossom Logo" style="max-height: 68px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));">
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 10px; font-weight: 500;">
+          {{ settings.shop_tagline if settings and settings.shop_tagline else 'Cake Shop Management System' }}
+        </p>
+      </div>
+
+      <!-- Error Alert -->
+      {% if error %}
+        <div style="background-color: var(--danger-light); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+          <svg style="width: 18px; height: 18px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          {{ error }}
+        </div>
+      {% endif %}
+
+      <!-- Login Form -->
+      <form action="/login" method="POST">
+        <div class="form-group">
+          <label class="form-label" for="username">Username or Email</label>
+          <input type="text" id="username" name="username" class="form-control" placeholder="Enter username / email" value="{{ username or '' }}" required autofocus>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label class="form-label" for="password">Password</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 700;">
+          Sign In to Shop ERP
+        </button>
+      </form>
+
+      <!-- Demo Accounts Quick Fill -->
+      <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center;">
+        <span style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 12px;">Quick Demo Accounts</span>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="fillCreds('owner', 'admin123')" style="font-size: 0.8rem;">
+            👑 Owner Demo
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="fillCreds('staff', 'staff123')" style="font-size: 0.8rem;">
+            👩‍🍳 Staff Demo
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function fillCreds(u, p) {
+      document.getElementById('username').value = u;
+      document.getElementById('password').value = p;
+    }
+  </script>
+</body>
+</html>

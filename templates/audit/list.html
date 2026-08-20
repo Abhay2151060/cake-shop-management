@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Logs - {{ settings.shop_name }}{% endblock %}
+{% block page_title %}Security & System Audit Trail{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+  <div class="card-panel-header" style="flex-wrap: wrap; gap: 12px;">
+    
+    <!-- Filter Form -->
+    <form method="GET" action="/audit-logs" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex: 1;">
+      <input type="text" name="search" class="form-control form-control-sm" placeholder="Search user, action, details..." value="{{ search }}" style="width: 260px;">
+      
+      <select name="module" class="form-select form-select-sm" style="width: 170px;">
+        <option value="">All Modules</option>
+        {% for m in modules_list %}
+          <option value="{{ m }}" {% if selected_module == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+      {% if search or selected_module %}
+        <a href="/audit-logs" class="btn btn-secondary btn-sm">Reset</a>
+      {% endif %}
+    </form>
+
+    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">
+      Showing latest {{ logs|length }} logs
+    </span>
+  </div>
+
+  <div class="card-panel-body" style="padding: 0;">
+    {% if logs %}
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>User</th>
+              <th>Role</th>
+              <th>Module</th>
+              <th>Action</th>
+              <th>Record ID</th>
+              <th>Details</th>
+              <th>IP</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+              <tr>
+                <td style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
+                  {{ log.created_at.strftime('%d-%b-%Y %I:%M:%S %p') }}
+                </td>
+                <td style="font-weight: 700;">{{ log.user_name or 'System' }}</td>
+                <td>
+                  <span class="badge {% if log.role == 'owner' %}badge-paid{% elif log.role == 'staff' %}badge-partially_paid{% else %}badge-active{% endif %}" style="font-size: 0.7rem;">
+                    {{ log.role.upper() }}
+                  </span>
+                </td>
+                <td><strong>{{ log.module }}</strong></td>
+                <td>{{ log.action }}</td>
+                <td><code>{{ log.record_id or '-' }}</code></td>
+                <td style="font-size: 0.85rem; max-width: 320px;">{{ log.details or '-' }}</td>
+                <td style="font-size: 0.78rem; color: var(--text-muted);">{{ log.ip_address or '-' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 40px; text-align: center; color: var(--text-muted);">No audit records found.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

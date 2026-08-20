@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Counter Dashboard - {{ settings.shop_name }}{% endblock %}
+{% block page_title %}Store Staff Counter Dashboard{% endblock %}
+
+{% block content %}
+<!-- Quick Operational Action Hub -->
+<div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 28px; border-radius: var(--radius-lg); margin-bottom: 24px; box-shadow: var(--shadow-md); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+  <div>
+    <h3 style="color: white; font-size: 1.5rem; margin-bottom: 6px;">Welcome, {{ user.name }}!</h3>
+    <p style="color: #bfdbfe; font-size: 0.95rem;">Ready to record in-store cake sales and custom cake bookings.</p>
+  </div>
+  <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <a href="/orders/pos" class="btn btn-accent btn-lg" style="box-shadow: 0 4px 12px rgba(245,158,11,0.4); font-weight: 700;">
+      <svg style="width: 22px; height: 22px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Open New POS Order
+    </a>
+    <a href="/custom-cakes/create" class="btn btn-cherry btn-lg" style="box-shadow: 0 4px 12px rgba(225,29,72,0.4); font-weight: 700;">
+      <svg style="width: 22px; height: 22px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z"/></svg>
+      Book Custom Cake
+    </a>
+  </div>
+</div>
+
+<!-- Counter Metrics -->
+<div class="kpi-grid">
+  
+  <div class="kpi-card" style="--card-accent: #2563eb;">
+    <div>
+      <div class="kpi-title">Today's Total Orders</div>
+      <div class="kpi-value">{{ kpis.today_orders }}</div>
+    </div>
+    <div class="kpi-icon-wrap" style="--icon-bg: #eff6ff; --icon-color: #2563eb;">
+      <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    </div>
+  </div>
+
+  <div class="kpi-card" style="--card-accent: #9333ea;">
+    <div>
+      <div class="kpi-title">Active Queue Orders</div>
+      <div class="kpi-value">{{ kpis.current_orders }}</div>
+      <div style="font-size: 0.78rem; margin-top: 4px;"><a href="/orders/current" style="color: #9333ea; font-weight: 700; text-decoration: underline;">View active kitchen queue &rarr;</a></div>
+    </div>
+    <div class="kpi-icon-wrap" style="--icon-bg: #fdf4ff; --icon-color: #9333ea;">
+      <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+  </div>
+
+  <div class="kpi-card" style="--card-accent: #e11d48;">
+    <div>
+      <div class="kpi-title">Active Custom Cakes</div>
+      <div class="kpi-value">{{ kpis.custom_cake_orders }}</div>
+      <div style="font-size: 0.78rem; margin-top: 4px;"><a href="/custom-cakes" style="color: var(--cherry); font-weight: 700; text-decoration: underline;">View bookings list &rarr;</a></div>
+    </div>
+    <div class="kpi-icon-wrap" style="--icon-bg: #ffe4e6; --icon-color: #e11d48;">
+      <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z"/></svg>
+    </div>
+  </div>
+
+</div>
+
+<!-- Recent Queue & Custom Cakes -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+  
+  <!-- Active Queue List -->
+  <div class="card-panel">
+    <div class="card-panel-header">
+      <div class="card-panel-title">
+        <svg style="width: 20px; height: 20px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Current Orders Queue
+      </div>
+      <a href="/orders/current" class="btn btn-secondary btn-sm">Full Queue</a>
+    </div>
+    <div class="card-panel-body" style="padding: 0;">
+      {% if recent_orders %}
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ord in recent_orders %}
+              <tr>
+                <td><a href="/orders/{{ ord.id }}" style="font-weight: 700; color: var(--primary);">{{ ord.order_number }}</a></td>
+                <td>{{ ord.customer_name }}</td>
+                <td><span class="badge badge-{{ ord.order_status }}">{{ ord.order_status.title() }}</span></td>
+                <td>
+                  <a href="/orders/{{ ord.id }}" class="btn btn-secondary btn-sm">Details</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div style="padding: 30px; text-align: center; color: var(--text-muted);">No active orders in queue.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Upcoming Custom Cakes -->
+  <div class="card-panel">
+    <div class="card-panel-header">
+      <div class="card-panel-title">
+        <svg style="width: 20px; height: 20px; color: var(--cherry);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Upcoming Custom Cakes
+      </div>
+      <a href="/custom-cakes" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    <div class="card-panel-body" style="padding: 0;">
+      {% if upcoming_custom_cakes %}
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Customer</th>
+              <th>Flavor</th>
+              <th>Required</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cc in upcoming_custom_cakes %}
+              <tr>
+                <td><a href="/custom-cakes/{{ cc.id }}" style="font-weight: 700; color: var(--primary);">{{ cc.custom_order_number }}</a></td>
+                <td>{{ cc.customer_name }}</td>
+                <td>{{ cc.flavor }}</td>
+                <td><strong>{{ cc.required_date }}</strong></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div style="padding: 30px; text-align: center; color: var(--text-muted);">No upcoming custom cakes.</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

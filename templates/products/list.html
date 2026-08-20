@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Products Management - {{ settings.shop_name }}{% endblock %}
+{% block page_title %}Cake Products Catalog{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+  <div class="card-panel-header" style="flex-wrap: wrap; gap: 12px;">
+    
+    <!-- Filter Controls -->
+    <form method="GET" action="/products" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex: 1;">
+      <input type="text" name="search" class="form-control form-control-sm" placeholder="Search product or SKU..." value="{{ search }}" style="width: 220px;">
+      
+      <select name="category_id" class="form-select form-select-sm" style="width: 180px;">
+        <option value="0">All Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if selected_category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+      {% if search or selected_category_id > 0 %}
+        <a href="/products" class="btn btn-secondary btn-sm">Reset</a>
+      {% endif %}
+    </form>
+
+    {% if user and user.role == 'owner' %}
+      <button type="button" class="btn btn-primary" onclick="openAddProductModal()">
+        <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Add Product
+      </button>
+    {% endif %}
+  </div>
+
+  <div class="card-panel-body" style="padding: 0;">
+    {% if products %}
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Product Name</th>
+              <th>Category</th>
+              <th>SKU</th>
+              <th>Size/Weight</th>
+              <th>Selling Price</th>
+              <th>Cost Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              {% if user and user.role == 'owner' %}
+                <th style="text-align: right;">Actions</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for prod in products %}
+              <tr>
+                <td>
+                  <div style="font-weight: 700;">{{ prod.name }}</div>
+                  {% if prod.description %}
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">{{ prod.description }}</div>
+                  {% endif %}
+                </td>
+                <td>{{ prod.category.name if prod.category else '-' }}</td>
+                <td><code>{{ prod.sku or '-' }}</code></td>
+                <td>{{ prod.size_weight }}</td>
+                <td style="font-weight: 800; color: var(--cherry);">₹{{ '{:,.2f}'.format(prod.selling_price) }}</td>
+                <td style="color: var(--text-muted);">₹{{ '{:,.2f}'.format(prod.cost_price) }}</td>
+                <td>
+                  <span class="badge {% if prod.is_low_stock %}badge-low_stock{% else %}badge-active{% endif %}">
+                    {{ prod.stock_qty }} left
+                  </span>
+                  {% if prod.is_low_stock %}
+                    <div style="font-size: 0.72rem; color: var(--danger); font-weight: 600;">Low Stock Alert!</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge badge-{{ prod.status }}">{{ prod.status.title() }}</span>
+                </td>
+                {% if user and user.role == 'owner' %}
+                  <td style="text-align: right;">
+                    <div style="display: inline-flex; gap: 6px;">
+                      <button type="button" class="btn btn-secondary btn-sm" onclick='openEditProductModal({{ prod.id }}, "{{ prod.name|replace("\"", "\\\"") }}", {{ prod.category_id }}, "{{ prod.sku or "" }}", "{{ prod.description or "" }}", "{{ prod.size_weight }}", {{ prod.selling_price }}, {{ prod.cost_price }}, {{ prod.stock_qty }}, {{ prod.min_stock_level }}, "{{ prod.status }}")'>
+                        Edit
+                      </button>
+                      <form action="/products/{{ prod.id }}/toggle-status" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-sm" title="Toggle active status">
+                          {{ 'Deactivate' if prod.status == 'active' else 'Activate' }}
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 40px; text-align: center; color: var(--text-muted);">No products found.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal: Add Product -->
+<div class="modal-backdrop" id="addProductModal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem;">Add New Cake Product</h3>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddProductModal()">✕</button>
+    </div>
+    <form action="/products/create" method="POST" enctype="multipart/form-data">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="add_name">Product Name *</label>
+          <input type="text" id="add_name" name="name" class="form-control" placeholder="e.g. Belgian Dark Chocolate Truffle" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="add_category_id">Category *</label>
+            <select id="add_category_id" name="category_id" class="form-select" required>
+              {% for cat in categories %}
+                <option value="{{ cat.id }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="add_sku">Product Code / SKU</label>
+            <input type="text" id="add_sku" name="sku" class="form-control" placeholder="e.g. CB-TRUF-01">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="add_size_weight">Size / Weight</label>
+            <input type="text" id="add_size_weight" name="size_weight" class="form-control" value="1 KG" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="add_selling_price">Selling Price (₹) *</label>
+            <input type="number" id="add_selling_price" name="selling_price" class="form-control" value="800" min="0" step="10" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="add_cost_price">Cost Price (₹)</label>
+            <input type="number" id="add_cost_price" name="cost_price" class="form-control" value="400" min="0" step="10">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="add_stock_qty">Current Available Stock</label>
+            <input type="number" id="add_stock_qty" name="stock_qty" class="form-control" value="10" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="add_min_stock_level">Low Stock Alert Level</label>
+            <input type="number" id="add_min_stock_level" name="min_stock_level" class="form-control" value="3" min="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="add_description">Description</label>
+          <textarea id="add_description" name="description" class="form-control" rows="2" placeholder="Brief cake description or ingredients"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeAddProductModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Edit Product -->
+<div class="modal-backdrop" id="editProductModal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem;">Edit Cake Product</h3>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditProductModal()">✕</button>
+    </div>
+    <form id="editProductForm" method="POST" enctype="multipart/form-data">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="edit_name">Product Name *</label>
+          <input type="text" id="edit_name" name="name" class="form-control" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="edit_category_id">Category *</label>
+            <select id="edit_category_id" name="category_id" class="form-select" required>
+              {% for cat in categories %}
+                <option value="{{ cat.id }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit_sku">Product Code / SKU</label>
+            <input type="text" id="edit_sku" name="sku" class="form-control">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="edit_size_weight">Size / Weight</label>
+            <input type="text" id="edit_size_weight" name="size_weight" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit_selling_price">Selling Price (₹)</label>
+            <input type="number" id="edit_selling_price" name="selling_price" class="form-control" min="0" step="10" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit_cost_price">Cost Price (₹)</label>
+            <input type="number" id="edit_cost_price" name="cost_price" class="form-control" min="0" step="10">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="edit_stock_qty">Stock Qty</label>
+            <input type="number" id="edit_stock_qty" name="stock_qty" class="form-control" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit_min_stock_level">Min Alert</label>
+            <input type="number" id="edit_min_stock_level" name="min_stock_level" class="form-control" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit_status">Status</label>
+            <select id="edit_status" name="status" class="form-select">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit_description">Description</label>
+          <textarea id="edit_description" name="description" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditProductModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openAddProductModal() {
+  document.getElementById('addProductModal').style.display = 'flex';
+}
+function closeAddProductModal() {
+  document.getElementById('addProductModal').style.display = 'none';
+}
+
+function openEditProductModal(id, name, catId, sku, desc, size, sellP, costP, stock, minS, status) {
+  document.getElementById('editProductForm').action = `/products/${id}/update`;
+  document.getElementById('edit_name').value = name;
+  document.getElementById('edit_category_id').value = catId;
+  document.getElementById('edit_sku').value = sku;
+  document.getElementById('edit_description').value = desc;
+  document.getElementById('edit_size_weight').value = size;
+  document.getElementById('edit_selling_price').value = sellP;
+  document.getElementById('edit_cost_price').value = costP;
+  document.getElementById('edit_stock_qty').value = stock;
+  document.getElementById('edit_min_stock_level').value = minS;
+  document.getElementById('edit_status').value = status;
+  document.getElementById('editProductModal').style.display = 'flex';
+}
+function closeEditProductModal() {
+  document.getElementById('editProductModal').style.display = 'none';
+}
+</script>
+{% endblock %}

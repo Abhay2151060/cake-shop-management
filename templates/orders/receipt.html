@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receipt - {{ order.order_number }} | {{ settings.shop_name }}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body {
+      background-color: #f1f5f9;
+      display: flex;
+      justify-content: center;
+      padding: 30px 15px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .receipt-container {
+      background: white;
+      width: 100%;
+      max-width: 420px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      padding: 24px;
+      color: #0f172a;
+    }
+    .thermal-divider {
+      border-top: 1px dashed #cbd5e1;
+      margin: 12px 0;
+    }
+    @media print {
+      body {
+        background: white !important;
+        padding: 0 !important;
+      }
+      .receipt-container {
+        box-shadow: none !important;
+        max-width: 80mm !important;
+        width: 80mm !important;
+        padding: 10px !important;
+        border-radius: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="receipt-container receipt-box">
+    
+    <!-- Action Buttons (Hidden when printing) -->
+    <div class="no-print" style="display: flex; gap: 10px; margin-bottom: 20px;">
+      <button type="button" class="btn btn-primary btn-sm" onclick="window.print()" style="flex: 1;">
+        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        Print Receipt
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="window.close()">Close</button>
+    </div>
+
+    <!-- Shop Branding Header -->
+    <div style="text-align: center;">
+      <img src="/static/logo.png" alt="Cherry Blossom Logo" style="max-height: 52px; margin-bottom: 6px;">
+      <h2 style="font-size: 1.15rem; margin-bottom: 2px;">{{ settings.shop_name }}</h2>
+      <p style="font-size: 0.78rem; color: #64748b; margin-bottom: 4px;">{{ settings.shop_tagline }}</p>
+      <p style="font-size: 0.75rem; color: #475569; line-height: 1.3;">{{ settings.shop_address }}</p>
+      <p style="font-size: 0.75rem; color: #475569; margin-top: 2px;">
+        Tel: {{ settings.shop_phone }}
+        {% if settings.shop_gstin %}| GSTIN: {{ settings.shop_gstin }}{% endif %}
+      </p>
+    </div>
+
+    <div class="thermal-divider"></div>
+
+    <!-- Order Metadata -->
+    <div style="font-size: 0.8rem; display: flex; flex-direction: column; gap: 3px;">
+      <div style="display: flex; justify-content: space-between;">
+        <span><strong>Order ID:</strong> {{ order.order_number }}</span>
+        <span><strong>Status:</strong> {{ order.payment_status.upper() }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; color: #475569;">
+        <span>Date: {{ order.created_at.strftime('%d-%b-%Y %I:%M %p') }}</span>
+        <span>Staff: {{ order.creator.name if order.creator else 'Counter' }}</span>
+      </div>
+      <div style="color: #475569;">
+        <span>Customer: <strong>{{ order.customer_name }}</strong></span>
+        {% if order.customer_phone %}<span>({{ order.customer_phone }})</span>{% endif %}
+      </div>
+    </div>
+
+    <div class="thermal-divider"></div>
+
+    <!-- Line Items -->
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+      <thead>
+        <tr style="border-bottom: 1px solid #e2e8f0; text-align: left;">
+          <th style="padding: 4px 0;">Item</th>
+          <th style="padding: 4px 0; text-align: center;">Qty</th>
+          <th style="padding: 4px 0; text-align: right;">Price</th>
+          <th style="padding: 4px 0; text-align: right;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order.items %}
+          <tr style="border-bottom: 1px dotted #f1f5f9;">
+            <td style="padding: 6px 0;">
+              <div><strong>{{ item.product_name }}</strong></div>
+              {% if item.size_weight %}<div style="font-size: 0.72rem; color: #64748b;">{{ item.size_weight }}</div>{% endif %}
+            </td>
+            <td style="padding: 6px 0; text-align: center;">{{ item.quantity }}</td>
+            <td style="padding: 6px 0; text-align: right;">₹{{ '{:,.2f}'.format(item.unit_price) }}</td>
+            <td style="padding: 6px 0; text-align: right; font-weight: 700;">₹{{ '{:,.2f}'.format(item.subtotal) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="thermal-divider"></div>
+
+    <!-- Summary Math -->
+    <div style="font-size: 0.82rem; display: flex; flex-direction: column; gap: 4px;">
+      <div style="display: flex; justify-content: space-between;">
+        <span>Subtotal:</span>
+        <span>₹{{ '{:,.2f}'.format(order.subtotal) }}</span>
+      </div>
+      {% if order.discount > 0 %}
+        <div style="display: flex; justify-content: space-between; color: #e11d48;">
+          <span>Discount:</span>
+          <span>- ₹{{ '{:,.2f}'.format(order.discount) }}</span>
+        </div>
+      {% endif %}
+      <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 1.05rem; border-top: 1px dashed #000; padding-top: 6px; margin-top: 2px;">
+        <span>GRAND TOTAL:</span>
+        <span>₹{{ '{:,.2f}'.format(order.grand_total) }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-weight: 700; color: #10b981; margin-top: 4px;">
+        <span>Paid ({{ order.payment_method.upper() }}):</span>
+        <span>₹{{ '{:,.2f}'.format(order.paid_amount) }}</span>
+      </div>
+      {% if order.pending_amount > 0 %}
+        <div style="display: flex; justify-content: space-between; font-weight: 700; color: #d97706;">
+          <span>Pending Due (Udhaar):</span>
+          <span>₹{{ '{:,.2f}'.format(order.pending_amount) }}</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="thermal-divider"></div>
+
+    <!-- Footer Note -->
+    <div style="text-align: center; font-size: 0.76rem; color: #64748b; margin-top: 14px;">
+      <p style="font-weight: 600; color: #0f172a; margin-bottom: 4px;">{{ settings.receipt_footer }}</p>
+      <p>Please retain this receipt for any inquiries.</p>
+    </div>
+
+  </div>
+
+</body>
+</html>

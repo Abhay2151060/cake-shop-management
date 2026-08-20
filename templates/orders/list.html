@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}All Orders - {{ settings.shop_name }}{% endblock %}
+{% block page_title %}Order Management & History{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+  <div class="card-panel-header" style="flex-wrap: wrap; gap: 12px;">
+    
+    <!-- Search & Filter Controls -->
+    <form method="GET" action="/orders" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex: 1;">
+      <input type="text" name="search" class="form-control" placeholder="Search Order ID, customer, phone..." value="{{ search }}" style="width: 240px;">
+      
+      <select name="status_filter" class="form-select" style="width: 150px;">
+        <option value="">All Statuses</option>
+        <option value="new" {% if status_filter == 'new' %}selected{% endif %}>New</option>
+        <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
+        <option value="preparing" {% if status_filter == 'preparing' %}selected{% endif %}>Preparing</option>
+        <option value="ready" {% if status_filter == 'ready' %}selected{% endif %}>Ready</option>
+        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+      </select>
+
+      <select name="payment_filter" class="form-select" style="width: 150px;">
+        <option value="">All Payments</option>
+        <option value="paid" {% if payment_filter == 'paid' %}selected{% endif %}>Paid</option>
+        <option value="partially_paid" {% if payment_filter == 'partially_paid' %}selected{% endif %}>Partially Paid</option>
+        <option value="pending" {% if payment_filter == 'pending' %}selected{% endif %}>Pending / Udhaar</option>
+      </select>
+
+      <button type="submit" class="btn btn-secondary">Filter</button>
+      {% if search or status_filter or payment_filter %}
+        <a href="/orders" class="btn btn-secondary" title="Clear filters">Reset</a>
+      {% endif %}
+    </form>
+
+    <a href="/orders/pos" class="btn btn-primary">
+      <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      New Order
+    </a>
+  </div>
+
+  <div class="card-panel-body" style="padding: 0;">
+    {% if orders %}
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Date & Time</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Paid</th>
+              <th>Pending</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ord in orders %}
+              <tr>
+                <td>
+                  <a href="/orders/{{ ord.id }}" style="font-weight: 700; color: var(--primary); text-decoration: underline;">
+                    {{ ord.order_number }}
+                  </a>
+                </td>
+                <td style="font-size: 0.82rem; color: var(--text-muted);">
+                  {{ ord.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                </td>
+                <td>
+                  <div style="font-weight: 600;">{{ ord.customer_name }}</div>
+                  {% if ord.customer_phone %}
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">{{ ord.customer_phone }}</div>
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.85rem;">
+                  {{ ord.items|length }} item(s)
+                </td>
+                <td style="font-weight: 800; color: var(--text-main);">
+                  ₹{{ '{:,.2f}'.format(ord.grand_total) }}
+                </td>
+                <td style="color: var(--success); font-weight: 600;">
+                  ₹{{ '{:,.2f}'.format(ord.paid_amount) }}
+                </td>
+                <td style="color: {% if ord.pending_amount > 0 %}#d97706{% else %}var(--text-muted){% endif %}; font-weight: 600;">
+                  ₹{{ '{:,.2f}'.format(ord.pending_amount) }}
+                </td>
+                <td>
+                  <span class="badge badge-{{ ord.payment_status }}">
+                    {{ ord.payment_status.replace('_', ' ').title() }}
+                  </span>
+                  <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; margin-top: 2px;">
+                    {{ ord.payment_method }}
+                  </div>
+                </td>
+                <td>
+                  <span class="badge badge-{{ ord.order_status }}">
+                    {{ ord.order_status.title() }}
+                  </span>
+                </td>
+                <td style="text-align: right;">
+                  <div style="display: inline-flex; gap: 6px;">
+                    <a href="/orders/{{ ord.id }}" class="btn btn-secondary btn-sm" title="View details">Details</a>
+                    <a href="/orders/{{ ord.id }}/receipt" target="_blank" class="btn btn-secondary btn-sm" title="Print Receipt">
+                      <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 40px; text-align: center; color: var(--text-muted);">
+        <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 6px;">No orders found.</p>
+        <p style="font-size: 0.88rem;">Try adjusting your filters or create a new order.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

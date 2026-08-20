@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - {{ settings.shop_name }}{% endblock %}
+{% block page_title %}User Account & Profile Settings{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 0 auto;">
+  <div class="card-panel">
+    <div class="card-panel-header">
+      <div class="card-panel-title">
+        <svg style="width: 20px; height: 20px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        Edit My Profile
+      </div>
+      <span class="badge badge-paid">{{ user.role.upper() }}</span>
+    </div>
+    <div class="card-panel-body">
+      <form action="/profile" method="POST">
+        
+        <div class="form-group">
+          <label class="form-label" for="profile_username">Username</label>
+          <input type="text" id="profile_username" class="form-control" value="{{ user.username }}" disabled style="background: var(--bg-main);">
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Usernames cannot be changed.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="profile_name">Full Name *</label>
+          <input type="text" id="profile_name" name="name" class="form-control" value="{{ user.name }}" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="profile_email">Email Address *</label>
+            <input type="email" id="profile_email" name="email" class="form-control" value="{{ user.email }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="profile_phone">Phone</label>
+            <input type="tel" id="profile_phone" name="phone" class="form-control" value="{{ user.phone or '' }}" placeholder="+91 XXXXX XXXXX">
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-color);">
+          <h4 style="font-size: 0.95rem; margin-bottom: 12px;">Change Password (Optional)</h4>
+          
+          <div class="form-group">
+            <label class="form-label" for="current_password">Current Password</label>
+            <input type="password" id="current_password" name="current_password" class="form-control" placeholder="Required only if changing password">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label class="form-label" for="new_password">New Password</label>
+              <input type="password" id="new_password" name="new_password" class="form-control" placeholder="Min 6 characters">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="confirm_password">Confirm New Password</label>
+              <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Repeat new password">
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 700;">
+            Save Profile Updates
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

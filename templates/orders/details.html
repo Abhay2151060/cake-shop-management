@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Order {{ order.order_number }} - {{ settings.shop_name }}{% endblock %}
+{% block page_title %}Order Details: {{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; gap: 12px; margin-bottom: 20px;">
+  <a href="/orders" class="btn btn-secondary btn-sm">&larr; Back to All Orders</a>
+  <a href="/orders/{{ order.id }}/receipt" target="_blank" class="btn btn-primary btn-sm">
+    <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+    Print Invoice / Receipt
+  </a>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+  
+  <!-- Left Side: Order Items & Breakdown -->
+  <div>
+    <div class="card-panel">
+      <div class="card-panel-header">
+        <div class="card-panel-title">
+          <span>Items in Order ({{ order.items|length }})</span>
+        </div>
+        <span class="badge badge-{{ order.order_status }}">{{ order.order_status.title() }}</span>
+      </div>
+      <div class="card-panel-body" style="padding: 0;">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Size</th>
+              <th>Unit Price</th>
+              <th>Qty</th>
+              <th style="text-align: right;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in order.items %}
+              <tr>
+                <td style="font-weight: 700;">{{ item.product_name }}</td>
+                <td style="color: var(--text-muted);">{{ item.size_weight or 'Standard' }}</td>
+                <td>₹{{ '{:,.2f}'.format(item.unit_price) }}</td>
+                <td><strong>{{ item.quantity }}</strong></td>
+                <td style="text-align: right; font-weight: 800;">₹{{ '{:,.2f}'.format(item.subtotal) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <!-- Calculation Totals -->
+        <div style="padding: 20px; background: var(--bg-main); border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+          <div style="width: 260px; display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Subtotal:</span>
+            <span>₹{{ '{:,.2f}'.format(order.subtotal) }}</span>
+          </div>
+          <div style="width: 260px; display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Discount Applied:</span>
+            <span style="color: var(--danger);">- ₹{{ '{:,.2f}'.format(order.discount) }}</span>
+          </div>
+          <div style="width: 260px; display: flex; justify-content: space-between; font-weight: 800; font-size: 1.2rem; border-top: 2px solid var(--border-color); padding-top: 8px; color: var(--primary);">
+            <span>Grand Total:</span>
+            <span>₹{{ '{:,.2f}'.format(order.grand_total) }}</span>
+          </div>
+          <div style="width: 260px; display: flex; justify-content: space-between; font-weight: 700; color: var(--success);">
+            <span>Paid Amount:</span>
+            <span>₹{{ '{:,.2f}'.format(order.paid_amount) }}</span>
+          </div>
+          {% if order.pending_amount > 0 %}
+            <div style="width: 260px; display: flex; justify-content: space-between; font-weight: 700; color: #d97706;">
+              <span>Pending Balance:</span>
+              <span>₹{{ '{:,.2f}'.format(order.pending_amount) }}</span>
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Payments Ledger For This Order -->
+    <div class="card-panel">
+      <div class="card-panel-header">
+        <div class="card-panel-title">Payment History</div>
+        <span class="badge badge-{{ order.payment_status }}">{{ order.payment_status.replace('_', ' ').title() }}</span>
+      </div>
+      <div class="card-panel-body" style="padding: 0;">
+        {% if order.payments %}
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Payment Date</th>
+                <th>Method</th>
+                <th>Amount</th>
+                <th>Collected By</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in order.payments %}
+                <tr>
+                  <td>{{ p.payment_date.strftime('%d %b %Y, %I:%M %p') }}</td>
+                  <td><span class="badge badge-active">{{ p.payment_method.upper() }}</span></td>
+                  <td style="font-weight: 700; color: var(--success);">₹{{ '{:,.2f}'.format(p.amount) }}</td>
+                  <td>{{ p.collector.name if p.collector else 'Staff' }}</td>
+                  <td style="font-size: 0.85rem; color: var(--text-muted);">{{ p.notes or '-' }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div style="padding: 20px; text-align: center; color: var(--text-muted);">No payment recorded yet (Pending/Udhaar order).</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Metadata & Status Controls -->
+  <div>
+    
+    <!-- Customer & Order Meta -->
+    <div class="card-panel">
+      <div class="card-panel-header">
+        <div class="card-panel-title">Order Information</div>
+      </div>
+      <div class="card-panel-body" style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Customer</div>
+          <div style="font-weight: 700; font-size: 1.05rem;">{{ order.customer_name }}</div>
+          {% if order.customer_phone %}
+            <div style="font-size: 0.88rem; color: var(--text-muted);">{{ order.customer_phone }}</div>
+          {% endif %}
+        </div>
+
+        <div>
+          <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Date Placed</div>
+          <div style="font-weight: 600;">{{ order.created_at.strftime('%A, %d %B %Y at %I:%M %p') }}</div>
+        </div>
+
+        <div>
+          <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Created By Staff</div>
+          <div>{{ order.creator.name if order.creator else 'Staff' }}</div>
+        </div>
+
+        {% if order.notes %}
+          <div>
+            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Order Notes</div>
+            <div style="background: var(--bg-main); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.88rem;">{{ order.notes }}</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Operational Status Management -->
+    <div class="card-panel">
+      <div class="card-panel-header">
+        <div class="card-panel-title">Update Status</div>
+      </div>
+      <div class="card-panel-body">
+        <div class="form-group">
+          <label class="form-label">Order Operational Status</label>
+          <select id="orderStatusSelect" class="form-select">
+            <option value="new" {% if order.order_status == 'new' %}selected{% endif %}>New</option>
+            <option value="confirmed" {% if order.order_status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+            <option value="preparing" {% if order.order_status == 'preparing' %}selected{% endif %}>Preparing / Baking</option>
+            <option value="ready" {% if order.order_status == 'ready' %}selected{% endif %}>Ready for Pickup</option>
+            <option value="completed" {% if order.order_status == 'completed' %}selected{% endif %}>Completed</option>
+            <option value="cancelled" {% if order.order_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-primary" style="width: 100%;" onclick="updateOrderStatus()">
+          Save Status
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+async function updateOrderStatus() {
+  const newStatus = document.getElementById('orderStatusSelect').value;
+  try {
+    const res = await fetch('/orders/api/{{ order.id }}/status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast("Order status updated to " + newStatus);
+      setTimeout(() => window.location.reload(), 600);
+    } else {
+      showCustomAlert("Update Failed", result.error || "Unable to update status", "error");
+    }
+  } catch (err) {
+    showCustomAlert("Connection Error", err.message || "Network error", "error");
+  }
+}
+</script>
+{% endblock %}
