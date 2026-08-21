@@ -273,11 +273,27 @@ async function submitOrder() {
   const paidAmount = parseFloat(document.getElementById('paidAmountInput').value) || 0;
   const notes = document.getElementById('orderNotesInput').value.trim();
 
+  const paymentStatusType = document.querySelector('input[name="payment_status_type"]:checked').value;
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const grandTotal = Math.max(0, subtotal - discount);
+
+  if (paymentStatusType === 'partial') {
+    if (paidAmount <= 0) {
+      showCustomAlert("Invalid Partial Payment Amount", "For Partial Payment, the Amount Paid must be greater than ₹0.00. If no payment is collected upfront, please select 'Udhaar'.", "warning");
+      return;
+    }
+    if (paidAmount >= grandTotal && grandTotal > 0) {
+      showCustomAlert("Invalid Partial Payment Amount", `For Partial Payment, the Amount Paid must be less than the Grand Total (₹${grandTotal.toFixed(2)}). If full payment is collected, please select 'Full Paid'.`, "warning");
+      return;
+    }
+  }
+
   const payload = {
     customer_name: customerName,
     customer_phone: customerPhone,
     discount: discount,
     payment_method: paymentMethod,
+    payment_status_type: paymentStatusType,
     paid_amount: paidAmount,
     notes: notes,
     items: cart.map(item => ({

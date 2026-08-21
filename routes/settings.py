@@ -36,7 +36,7 @@ def settings_update(
     shop_gstin: str = Form(""),
     receipt_footer: str = Form(""),
     currency_symbol: str = Form("₹"),
-    theme: str = Form("light"),
+    theme: str = Form(None),
     user: User = Depends(require_owner),
     db: Session = Depends(get_db)
 ):
@@ -49,8 +49,9 @@ def settings_update(
         "shop_gstin": shop_gstin.strip(),
         "receipt_footer": receipt_footer.strip(),
         "currency_symbol": currency_symbol.strip(),
-        "theme": theme.strip()
     }
+    if theme:
+        updates["theme"] = theme.strip()
 
     for k, v in updates.items():
         s = db.query(Setting).filter(Setting.key == k).first()

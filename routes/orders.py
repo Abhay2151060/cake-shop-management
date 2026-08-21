@@ -83,6 +83,10 @@ async def create_order_api(
     subtotal = round(subtotal, 2)
     grand_total = max(0.0, round(subtotal - discount, 2))
 
+    payment_status_type = payload.get("payment_status_type")
+    if payment_status_type == "partial" and paid_amount <= 0:
+        return JSONResponse({"success": False, "error": "For Partial Payment, paid amount must be greater than ₹0.00. Select Udhaar for zero payment."}, status_code=400)
+
     if paid_amount > grand_total:
         return JSONResponse({"success": False, "error": "Paid amount cannot exceed grand total."}, status_code=400)
 

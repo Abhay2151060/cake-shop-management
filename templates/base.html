@@ -1,16 +1,29 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="{{ settings.theme if settings and settings.theme else 'light' }}">
+<html lang="en" data-theme="{% if user and user.role == 'owner' %}dark{% elif user and user.role == 'staff' %}light{% else %}{{ settings.theme if settings and settings.theme else 'light' }}{% endif %}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}{{ settings.shop_name if settings else 'Cherry Blossom' }}{% endblock %} | Cake Shop ERP</title>
   
-  <!-- Fast Anti-Flicker Check for Minimized Sidebar -->
+  <!-- Fast Anti-Flicker & Per-User Theme Preference Check -->
   <script>
-    if (localStorage.getItem('sidebar_collapsed') === 'true') {
-      document.documentElement.classList.add('sidebar-collapsed');
-      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('sidebar-collapsed'));
-    }
+    (function() {
+      if (localStorage.getItem('sidebar_collapsed') === 'true') {
+        document.documentElement.classList.add('sidebar-collapsed');
+        document.addEventListener('DOMContentLoaded', () => document.body.classList.add('sidebar-collapsed'));
+      }
+      {% if user %}
+      const userId = '{{ user.id }}';
+      const userRole = '{{ user.role }}';
+      let savedTheme = localStorage.getItem('theme_user_' + userId);
+      if (!savedTheme) {
+        // Default: Owner gets Dark theme, Staff gets Light theme
+        savedTheme = (userRole === 'owner') ? 'dark' : 'light';
+        localStorage.setItem('theme_user_' + userId, savedTheme);
+      }
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      {% endif %}
+    })();
   </script>
 
   <!-- CSS & Fonts -->
@@ -155,12 +168,11 @@
 
         <div style="display: flex; align-items: center; gap: 14px;">
           
-          <!-- Theme Switcher -->
-          <form action="/settings/theme-toggle" method="POST" style="margin: 0;">
-            <button type="submit" class="btn btn-secondary btn-sm" title="Toggle Light/Dark Theme">
-              <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-            </button>
-          </form>
+          <!-- Theme Switcher (Per-User Independent) -->
+          <button type="button" onclick="toggleUserTheme()" class="btn btn-secondary btn-sm" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+            <svg id="themeIconSun" style="width: 16px; height: 16px; display: none;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg id="themeIconMoon" style="width: 16px; height: 16px; display: none;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+          </button>
 
           <!-- Quick Action POS -->
           <a href="/orders/pos" class="btn btn-cherry btn-sm">
@@ -262,6 +274,37 @@
     window.alert = function(message) {
       showCustomAlert('Notification', message, 'info');
     };
+
+    function toggleUserTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      const newTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      {% if user %}
+      localStorage.setItem('theme_user_{{ user.id }}', newTheme);
+      {% else %}
+      localStorage.setItem('app_theme', newTheme);
+      {% endif %}
+      updateThemeIcon(newTheme);
+    }
+
+    function updateThemeIcon(theme) {
+      const sunIcon = document.getElementById('themeIconSun');
+      const moonIcon = document.getElementById('themeIconMoon');
+      if (sunIcon && moonIcon) {
+        if (theme === 'dark') {
+          sunIcon.style.display = 'inline-block';
+          moonIcon.style.display = 'none';
+        } else {
+          sunIcon.style.display = 'none';
+          moonIcon.style.display = 'inline-block';
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      updateThemeIcon(currentTheme);
+    });
   </script>
 
   {% block scripts %}{% endblock %}
