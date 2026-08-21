@@ -261,6 +261,43 @@ body.sidebar-collapsed .user-meta {
 }
 
 /* Main Content Area */
+/* Sidebar Mobile Overlay Backdrop */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+body.mobile-sidebar-open .sidebar-overlay {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-sidebar);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+  background: var(--bg-sidebar-hover);
+  color: #ffffff;
+}
+
 .main-wrapper {
   margin-left: 260px;
   flex: 1;
@@ -286,6 +323,18 @@ body.sidebar-collapsed .main-wrapper {
   top: 0;
   z-index: 90;
   box-shadow: var(--shadow-sm);
+}
+
+.navbar-left, .navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-page-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
 }
 
 .page-content {
@@ -799,6 +848,257 @@ body.sidebar-collapsed .main-wrapper {
     padding: 0;
     box-shadow: none !important;
     border: none !important;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN BREAKPOINTS & MOBILE ADAPTATIONS
+   ========================================================================== */
+
+/* Laptop & Tablet Landscape (Max Width: 1024px) */
+@media screen and (max-width: 1024px) {
+  .page-content {
+    padding: 22px 18px;
+  }
+  .top-navbar {
+    padding: 0 20px;
+  }
+  .pos-container {
+    grid-template-columns: 1fr 360px;
+    gap: 16px;
+  }
+  .pos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
+
+/* Tablet Portrait & Mobile Drawer (Max Width: 768px) */
+@media screen and (max-width: 768px) {
+  .sidebar-close-btn {
+    display: inline-flex;
+  }
+
+  /* Off-Canvas Sliding Drawer Sidebar */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px !important;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+  }
+
+  body.mobile-sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  /* Reset collapsed sidebar behavior on mobile drawer */
+  body.sidebar-collapsed .sidebar {
+    width: 280px !important;
+  }
+  body.sidebar-collapsed .nav-section-title {
+    display: block;
+  }
+  body.sidebar-collapsed .nav-item {
+    justify-content: flex-start;
+    padding: 10px 14px;
+    gap: 12px;
+  }
+  body.sidebar-collapsed .nav-item .nav-text {
+    display: inline;
+  }
+  body.sidebar-collapsed .user-meta {
+    display: block;
+  }
+  body.sidebar-collapsed .sidebar-footer {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 14px 16px;
+  }
+
+  /* Main Content Full Width */
+  .main-wrapper,
+  body.sidebar-collapsed .main-wrapper {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  .top-navbar {
+    padding: 0 16px;
+    height: 58px;
+  }
+
+  .header-page-title {
+    font-size: 1.1rem;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .page-content {
+    padding: 16px 12px;
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .kpi-card {
+    padding: 14px;
+  }
+
+  .kpi-value {
+    font-size: 1.35rem;
+  }
+
+  .kpi-icon-wrap {
+    width: 40px;
+    height: 40px;
+  }
+  .kpi-icon-wrap svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* POS Interface Vertical Responsive Stack */
+  .pos-container {
+    grid-template-columns: 1fr;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .pos-catalog {
+    overflow: visible;
+  }
+
+  .pos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    max-height: 55vh;
+  }
+
+  .pos-cart-panel {
+    max-height: none;
+    height: auto;
+  }
+
+  .pos-cart-items {
+    max-height: 280px;
+  }
+
+  /* Panels, Cards & Forms */
+  .card-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .card-panel-body {
+    padding: 16px 14px;
+  }
+
+  /* Table Touch Horizontal Scroll */
+  .table-responsive {
+    margin: 0 -12px;
+    padding: 0 12px;
+    width: calc(100% + 24px);
+    border-radius: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-custom th,
+  .table-custom td {
+    padding: 10px 12px;
+    font-size: 0.84rem;
+    white-space: nowrap;
+  }
+
+  /* Buttons & Inputs Touch Targets */
+  .btn {
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+
+  .btn-sm {
+    min-height: 34px;
+    padding: 6px 10px;
+  }
+
+  .form-control,
+  .form-select {
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    min-height: 42px;
+  }
+}
+
+/* Small Mobile & Phones (Max Width: 576px) */
+@media screen and (max-width: 576px) {
+  .header-page-title {
+    max-width: 130px;
+    font-size: 1rem;
+  }
+
+  .navbar-right {
+    gap: 8px;
+  }
+
+  .navbar-right .btn-text {
+    display: none;
+  }
+
+  .header-pos-btn,
+  .header-profile-btn {
+    padding: 6px 10px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+/* Extra Small Phones (Max Width: 480px) */
+@media screen and (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .pos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+  }
+
+  .modal-content {
+    width: 95vw;
+    max-height: 92vh;
+    border-radius: var(--radius-sm);
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 14px 16px;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
   }
 }
 

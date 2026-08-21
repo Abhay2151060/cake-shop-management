@@ -37,10 +37,16 @@
 <body>
   <div class="app-container">
     
+    <!-- Sidebar Mobile Overlay Backdrop -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
     <!-- Sidebar Navigation -->
     <aside class="sidebar no-print" id="appSidebar">
       <div class="sidebar-header">
         <img src="/static/logo.png" alt="Cherry Blossom Logo" class="sidebar-logo-img">
+        <button type="button" class="sidebar-close-btn" onclick="toggleSidebar()" aria-label="Close sidebar">
+          <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
 
       <nav class="sidebar-nav">
@@ -126,7 +132,7 @@
             <span class="nav-text">Book Custom Cake</span>
           </a>
           <a href="/custom-cakes" class="nav-item {% if request.url.path == '/custom-cakes' %}active{% endif %}" data-title="Custom Cakes List">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z"/></svg>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z"/></svg>
             <span class="nav-text">Custom Cakes List</span>
           </a>
           <a href="/orders" class="nav-item {% if request.url.path == '/orders' %}active{% endif %}" data-title="Order History">
@@ -155,18 +161,18 @@
       
       <!-- Top Navbar -->
       <header class="top-navbar no-print">
-        <div style="display: flex; align-items: center; gap: 14px;">
+        <div class="navbar-left">
           <!-- Sidebar Toggle Button -->
-          <button type="button" id="sidebarToggleBtn" class="btn btn-secondary btn-sm" title="Minimize / Expand Sidebar" onclick="toggleSidebar()" style="padding: 6px 10px;">
+          <button type="button" id="sidebarToggleBtn" class="btn btn-secondary btn-sm" title="Toggle Navigation Menu" onclick="toggleSidebar()" style="padding: 6px 10px;">
             <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
             </svg>
           </button>
           
-          <h2 style="font-size: 1.25rem;">{% block page_title %}Dashboard{% endblock %}</h2>
+          <h2 class="header-page-title">{% block page_title %}Dashboard{% endblock %}</h2>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 14px;">
+        <div class="navbar-right">
           
           <!-- Theme Switcher (Per-User Independent) -->
           <button type="button" onclick="toggleUserTheme()" class="btn btn-secondary btn-sm" id="themeToggleBtn" title="Toggle Light/Dark Theme">
@@ -175,15 +181,15 @@
           </button>
 
           <!-- Quick Action POS -->
-          <a href="/orders/pos" class="btn btn-cherry btn-sm">
+          <a href="/orders/pos" class="btn btn-cherry btn-sm header-pos-btn" title="New Order (POS)">
             <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            New Order (POS)
+            <span class="btn-text">New Order (POS)</span>
           </a>
 
           <!-- Profile Link -->
-          <a href="/profile" class="btn btn-secondary btn-sm" title="My Profile">
+          <a href="/profile" class="btn btn-secondary btn-sm header-profile-btn" title="My Profile">
             <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-            Profile
+            <span class="btn-text">Profile</span>
           </a>
         </div>
       </header>
@@ -212,9 +218,25 @@
 
   <script>
     function toggleSidebar() {
-      const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
-      localStorage.setItem('sidebar_collapsed', isCollapsed);
+      if (window.innerWidth <= 768) {
+        document.body.classList.toggle('mobile-sidebar-open');
+      } else {
+        const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('sidebar_collapsed', isCollapsed);
+      }
     }
+
+    // Auto-close mobile drawer when navigating
+    document.addEventListener('DOMContentLoaded', () => {
+      const navLinks = document.querySelectorAll('.sidebar-nav .nav-item');
+      navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth <= 768) {
+            document.body.classList.remove('mobile-sidebar-open');
+          }
+        });
+      });
+    });
 
     // Global Custom Branded Popups (No browser localhost dialogs!)
     window.showToast = function(title, icon = 'success') {
