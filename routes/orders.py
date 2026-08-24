@@ -50,7 +50,7 @@ async def create_order_api(
 
     customer_name = payload.get("customer_name", "").strip() or "Walk-in Customer"
     customer_phone = payload.get("customer_phone", "").strip() or None
-    discount = float(payload.get("discount", 0.0))
+    discount = 0.0
     payment_method = payload.get("payment_method", "cash")  # 'cash', 'upi', 'pending'
     paid_amount = float(payload.get("paid_amount", 0.0))
     notes = payload.get("notes", "").strip() or None
@@ -81,7 +81,7 @@ async def create_order_api(
         })
 
     subtotal = round(subtotal, 2)
-    grand_total = max(0.0, round(subtotal - discount, 2))
+    grand_total = subtotal
 
     payment_status_type = payload.get("payment_status_type")
     if payment_status_type == "partial" and paid_amount <= 0:

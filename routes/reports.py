@@ -67,7 +67,6 @@ def reports_index(
 
     total_orders_count = len(orders)
     total_gross_sales = sum(o.subtotal for o in orders)
-    total_discounts = sum(o.discount for o in orders)
     total_net_sales = sum(o.grand_total for o in orders)
     total_received_amount = sum(o.paid_amount for o in orders)
     total_pending_amount = sum(o.pending_amount for o in orders)
@@ -110,7 +109,7 @@ def reports_index(
     summary = {
         "total_orders": total_orders_count,
         "gross_sales": round(total_gross_sales, 2),
-        "discounts": round(total_discounts, 2),
+        "discounts": 0.0,
         "net_sales": round(total_net_sales, 2),
         "received": round(total_received_amount, 2),
         "pending": round(total_pending_amount, 2),
@@ -159,7 +158,6 @@ def export_csv(
             "Customer Name": o.customer_name,
             "Customer Phone": o.customer_phone or "",
             "Subtotal (₹)": o.subtotal,
-            "Discount (₹)": o.discount,
             "Grand Total (₹)": o.grand_total,
             "Paid Amount (₹)": o.paid_amount,
             "Pending Amount (₹)": o.pending_amount,
@@ -234,7 +232,6 @@ def export_excel(
             "Customer": o.customer_name,
             "Phone": o.customer_phone or "",
             "Subtotal (₹)": o.subtotal,
-            "Discount (₹)": o.discount,
             "Grand Total (₹)": o.grand_total,
             "Paid (₹)": o.paid_amount,
             "Pending (₹)": o.pending_amount,

@@ -72,10 +72,22 @@ function removeFromCart(productId) {
 }
 
 async function clearCart() {
-  if (cart.length === 0) return;
+  const nameInput = document.getElementById('customerNameInput');
+  const phoneInput = document.getElementById('customerPhoneInput');
+  const notesInput = document.getElementById('orderNotesInput');
+
+  const hasCustomerInfo = (nameInput?.value.trim() || '') !== '' ||
+                          (phoneInput?.value.trim() || '') !== '' ||
+                          (notesInput?.value.trim() || '') !== '';
+
+  if (cart.length === 0 && !hasCustomerInfo) {
+    showToast("Cart is already empty", "info");
+    return;
+  }
+
   const confirmed = await showCustomConfirm(
     "Clear Current Order?",
-    "Are you sure you want to remove all items from the cart?",
+    "Are you sure you want to clear all cart items and customer details?",
     "Yes, Clear Order",
     "Cancel",
     "warning",
@@ -83,7 +95,19 @@ async function clearCart() {
   );
   if (confirmed) {
     cart = [];
-    document.getElementById('discountInput').value = 0;
+
+    if (nameInput) nameInput.value = '';
+    if (phoneInput) phoneInput.value = '';
+    if (notesInput) notesInput.value = '';
+
+    const paymentSelect = document.getElementById('paymentMethodSelect');
+    if (paymentSelect) paymentSelect.value = 'cash';
+
+    const paidRadio = document.querySelector('input[name="payment_status_type"][value="paid"]');
+    if (paidRadio) {
+      paidRadio.checked = true;
+    }
+
     renderCart();
     showToast("Order cart cleared", "info");
   }
@@ -114,6 +138,7 @@ function renderCart() {
     pendingElem.innerText = '₹0.00';
     paidInput.value = 0;
     submitBtn.disabled = true;
+    recalcPayment(0);
     return;
   }
 
@@ -149,8 +174,7 @@ function renderCart() {
   cartContainer.innerHTML = html;
   cartCountElem.innerText = `${totalItems} items`;
 
-  const discount = parseFloat(document.getElementById('discountInput').value) || 0;
-  const grandTotal = Math.max(0, subtotal - discount);
+  const grandTotal = Math.max(0, subtotal);
 
   subtotalElem.innerText = `₹${subtotal.toFixed(2)}`;
   grandTotalElem.innerText = `₹${grandTotal.toFixed(2)}`;
@@ -162,8 +186,7 @@ function renderCart() {
 function recalcPayment(grandTotal) {
   if (grandTotal === undefined) {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const discount = parseFloat(document.getElementById('discountInput').value) || 0;
-    grandTotal = Math.max(0, subtotal - discount);
+    grandTotal = Math.max(0, subtotal);
   }
 
   const paymentStatusType = document.querySelector('input[name="payment_status_type"]:checked').value;
@@ -202,11 +225,6 @@ function setupPaymentControls() {
   const paidInput = document.getElementById('paidAmountInput');
   if (paidInput) {
     paidInput.addEventListener('input', () => recalcPayment());
-  }
-
-  const discountInput = document.getElementById('discountInput');
-  if (discountInput) {
-    discountInput.addEventListener('input', () => renderCart());
   }
 }
 
@@ -268,14 +286,13 @@ async function submitOrder() {
 
   const customerName = document.getElementById('customerNameInput').value.trim() || 'Walk-in Customer';
   const customerPhone = document.getElementById('customerPhoneInput').value.trim();
-  const discount = parseFloat(document.getElementById('discountInput').value) || 0;
   const paymentMethod = document.getElementById('paymentMethodSelect').value;
   const paidAmount = parseFloat(document.getElementById('paidAmountInput').value) || 0;
   const notes = document.getElementById('orderNotesInput').value.trim();
 
   const paymentStatusType = document.querySelector('input[name="payment_status_type"]:checked').value;
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const grandTotal = Math.max(0, subtotal - discount);
+  const grandTotal = Math.max(0, subtotal);
 
   if (paymentStatusType === 'partial') {
     if (paidAmount <= 0) {
@@ -288,41 +305,40 @@ async function submitOrder() {
     }
   }
 
-  const payload = {
-    customer_name: customerName,
-    customer_phone: customerPhone,
-    discount: discount,
-    payment_method: paymentMethod,
-    payment_status_type: paymentStatusType,
-    paid_amount: paidAmount,
-    notes: notes,
-    items: cart.map(item => ({
-      product_id: item.product_id,
-      quantity: item.quantity
-    }))
-  };
+    const payload = {
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      discount: 0,
+      payment_method: paymentMethod,
+      payment_status_type: paymentStatusType,
+      paid_amount: paidAmount,
+      notes: notes,
+      items: cart.map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity
+      }))
+    };
 
-  const submitBtn = document.getElementById('submitOrderBtn');
-  submitBtn.disabled = true;
-  submitBtn.innerText = 'Processing Order...';
+    const submitBtn = document.getElementById('submitOrderBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Processing Order...';
 
-  try {
-    const res = await fetch('/orders/api/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const result = await res.json();
+    try {
+      const res = await fetch('/orders/api/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const result = await res.json();
 
-    if (result.success) {
-      // Prompt modal with receipt options
-      showOrderSuccessModal(result.order_number, result.receipt_url);
-      cart = [];
-      document.getElementById('customerNameInput').value = '';
-      document.getElementById('customerPhoneInput').value = '';
-      document.getElementById('discountInput').value = 0;
-      document.getElementById('orderNotesInput').value = '';
-      renderCart();
+      if (result.success) {
+        // Prompt modal with receipt options
+        showOrderSuccessModal(result.order_number, result.receipt_url);
+        cart = [];
+        document.getElementById('customerNameInput').value = '';
+        document.getElementById('customerPhoneInput').value = '';
+        document.getElementById('orderNotesInput').value = '';
+        renderCart();
       showToast("Order " + result.order_number + " completed!", "success");
     } else {
       showCustomAlert("Order Failed", result.error || "Unable to complete order. Please check inventory levels.", "error");

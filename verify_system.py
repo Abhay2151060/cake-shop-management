@@ -38,7 +38,7 @@ def run_checks():
     for o in orders:
         calculated_subtotal = sum(item.subtotal for item in o.items)
         assert abs(o.subtotal - calculated_subtotal) < 0.01, f"Subtotal mismatch on {o.order_number}"
-        calculated_grand = max(0.0, o.subtotal - o.discount)
+        calculated_grand = max(0.0, o.subtotal)
         assert abs(o.grand_total - calculated_grand) < 0.01, f"Grand total mismatch on {o.order_number}"
         assert abs(o.pending_amount - max(0.0, o.grand_total - o.paid_amount)) < 0.01, f"Pending mismatch on {o.order_number}"
     print(f"[OK] Order financial integrity check passed across {len(orders)} orders")

@@ -106,7 +106,6 @@
                 <th>Date & Time</th>
                 <th>Customer</th>
                 <th>Subtotal</th>
-                <th>Discount</th>
                 <th>Grand Total</th>
                 <th>Paid</th>
                 <th>Pending</th>
@@ -121,7 +120,6 @@
                   <td style="font-size: 0.82rem; color: var(--text-muted);">{{ ord.created_at.strftime('%d %b %Y, %I:%M %p') }}</td>
                   <td>{{ ord.customer_name }}</td>
                   <td>₹{{ '{:,.2f}'.format(ord.subtotal) }}</td>
-                  <td style="color: var(--danger);">-₹{{ '{:,.2f}'.format(ord.discount) }}</td>
                   <td style="font-weight: 800;">₹{{ '{:,.2f}'.format(ord.grand_total) }}</td>
                   <td style="color: var(--success); font-weight: 600;">₹{{ '{:,.2f}'.format(ord.paid_amount) }}</td>
                   <td style="color: {% if ord.pending_amount > 0 %}#d97706{% else %}var(--text-muted){% endif %};">

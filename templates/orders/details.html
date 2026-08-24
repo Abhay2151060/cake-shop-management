@@ -53,10 +53,6 @@
             <span style="color: var(--text-muted);">Subtotal:</span>
             <span>₹{{ '{:,.2f}'.format(order.subtotal) }}</span>
           </div>
-          <div style="width: 260px; display: flex; justify-content: space-between;">
-            <span style="color: var(--text-muted);">Discount Applied:</span>
-            <span style="color: var(--danger);">- ₹{{ '{:,.2f}'.format(order.discount) }}</span>
-          </div>
           <div style="width: 260px; display: flex; justify-content: space-between; font-weight: 800; font-size: 1.2rem; border-top: 2px solid var(--border-color); padding-top: 8px; color: var(--primary);">
             <span>Grand Total:</span>
             <span>₹{{ '{:,.2f}'.format(order.grand_total) }}</span>

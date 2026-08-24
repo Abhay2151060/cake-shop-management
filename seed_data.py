@@ -160,9 +160,9 @@ def seed():
                     ("Belgian Dark Chocolate Truffle", 1, 850.0),
                     ("Choco Lava Cupcake", 2, 95.0)
                 ],
-                "discount": 40.0,
+                "discount": 0.0,
                 "payment_method": "upi",
-                "paid_amount": 1000.0,
+                "paid_amount": 1040.0,
                 "payment_status": "paid",
                 "order_status": "completed",
                 "notes": "Fast walk-in customer"
@@ -190,12 +190,12 @@ def seed():
                     ("Royal Red Velvet with Cream Cheese", 1, 950.0),
                     ("Golden Butterscotch Delight", 1, 700.0)
                 ],
-                "discount": 50.0,
+                "discount": 0.0,
                 "payment_method": "pending",
                 "paid_amount": 600.0,
                 "payment_status": "partially_paid",
                 "order_status": "completed",
-                "notes": "Paid ₹600 cash advance, balance ₹1000 promised tomorrow (Udhaar account)"
+                "notes": "Paid ₹600 cash advance, balance ₹1050 promised tomorrow (Udhaar account)"
             },
             {
                 "order_number": "ORD-000104",
@@ -215,18 +215,18 @@ def seed():
 
         for s_ord in sample_orders:
             existing = db.query(Order).filter(Order.order_number == s_ord["order_number"]).first()
-            if not existing:
-                subtotal = sum(q * p for _, q, p in s_ord["items"])
-                grand_total = subtotal - s_ord["discount"]
-                pending_amount = max(0.0, grand_total - s_ord["paid_amount"])
+            subtotal = sum(q * p for _, q, p in s_ord["items"])
+            grand_total = subtotal
+            pending_amount = max(0.0, grand_total - s_ord["paid_amount"])
 
+            if not existing:
                 order = Order(
                     order_number=s_ord["order_number"],
                     user_id=staff.id,
                     customer_name=s_ord["customer_name"],
                     customer_phone=s_ord["customer_phone"],
                     subtotal=subtotal,
-                    discount=s_ord["discount"],
+                    discount=0.0,
                     grand_total=grand_total,
                     paid_amount=s_ord["paid_amount"],
                     pending_amount=pending_amount,
@@ -260,6 +260,11 @@ def seed():
                         payment_method="cash" if s_ord["payment_method"] == "cash" else "upi",
                         notes="Initial order payment"
                     ))
+            else:
+                existing.discount = 0.0
+                existing.grand_total = existing.subtotal
+                existing.pending_amount = max(0.0, existing.grand_total - existing.paid_amount)
+                db.flush()
         db.commit()
 
         # 7. Seed Custom Cake Orders
