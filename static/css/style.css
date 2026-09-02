@@ -568,6 +568,24 @@ body.sidebar-collapsed .main-wrapper {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
+.form-control::file-selector-button {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  background-color: var(--border-color);
+  color: var(--text-main);
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 12px;
+  transition: all 0.2s ease;
+}
+
+.form-control::file-selector-button:hover {
+  background-color: #cbd5e1;
+}
+
 /* Tables */
 .table-responsive {
   width: 100%;
@@ -644,10 +662,11 @@ body.sidebar-collapsed .main-wrapper {
 
 .pos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-auto-rows: minmax(125px, auto);
+  gap: 16px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 4px;
 }
 
 .pos-item-card {
@@ -655,6 +674,8 @@ body.sidebar-collapsed .main-wrapper {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 14px;
+  min-height: 125px;
+  box-sizing: border-box;
   cursor: pointer;
   display: flex;
   flex-direction: column;

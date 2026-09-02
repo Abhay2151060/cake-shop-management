@@ -166,7 +166,7 @@
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" onclick="closeCustomPayModal()">Cancel</button>
-      <button type="button" class="btn btn-primary" onclick="submitCustomCakePayment()">Record Settlement</button>
+      <button type="button" class="btn btn-primary" id="customPaySubmitBtn" onclick="submitCustomCakePayment()">Record Settlement</button>
     </div>
   </div>
 </div>
@@ -175,12 +175,10 @@
 async function updateCustomCakeStatus() {
   const status = document.getElementById('customStatusSelect').value;
   try {
-    const res = await fetch('/custom-cakes/api/{{ order.id }}/status', {
+    const result = await apiFetch('/custom-cakes/api/{{ order.id }}/status', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: status })
     });
-    const result = await res.json();
     if (result.success) {
       showToast("Custom cake status updated!");
       setTimeout(() => window.location.reload(), 600);
@@ -188,11 +186,16 @@ async function updateCustomCakeStatus() {
       showCustomAlert("Update Failed", result.error || "Failed to update status", "error");
     }
   } catch (err) {
-    showCustomAlert("Connection Error", err.message || "Network error", "error");
+    showCustomAlert("Update Failed", err.message || "Network error", "error");
   }
 }
 
 function openCustomPayModal(id, amount) {
+  const input = document.getElementById('customPayAmount');
+  if (input) {
+    input.value = Number(amount).toFixed(2);
+    input.max = amount;
+  }
   document.getElementById('customPayModal').style.display = 'flex';
 }
 
@@ -206,13 +209,13 @@ async function submitCustomCakePayment() {
     showCustomAlert("Invalid Amount", "Please enter a valid amount greater than zero.", "warning");
     return;
   }
+  const btn = document.getElementById('customPaySubmitBtn');
+  if (btn) { btn.disabled = true; btn.innerText = 'Saving...'; }
   try {
-    const res = await fetch('/custom-cakes/api/{{ order.id }}/settle-payment', {
+    const result = await apiFetch('/custom-cakes/api/{{ order.id }}/settle-payment', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount: amount })
     });
-    const result = await res.json();
     if (result.success) {
       closeCustomPayModal();
       showToast("Balance settled successfully!");
@@ -221,7 +224,9 @@ async function submitCustomCakePayment() {
       showCustomAlert("Payment Failed", result.error || "Failed to record payment", "error");
     }
   } catch (err) {
-    showCustomAlert("Connection Error", err.message || "Network error", "error");
+    showCustomAlert("Payment Failed", err.message || "Network error", "error");
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerText = 'Record Payment'; }
   }
 }
 </script>

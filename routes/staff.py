@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User
 from utils.auth_helper import require_owner, get_shop_settings
 from utils.audit_helper import log_activity
+from utils.templating import templates
 
 router = APIRouter(prefix="/staff", tags=["staff"])
-templates = Jinja2Templates(directory="templates")
 
 @router.get("", response_class=HTMLResponse)
 def staff_list_page(request: Request, user: User = Depends(require_owner), db: Session = Depends(get_db)):

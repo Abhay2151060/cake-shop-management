@@ -3,16 +3,15 @@ import shutil
 import datetime
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, status, UploadFile, File, Body
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, CustomCakeOrder
 from utils.auth_helper import require_login, get_shop_settings
 from utils.audit_helper import log_activity
 from config import CUSTOM_CAKE_UPLOAD_DIR
+from utils.templating import templates
 
 router = APIRouter(prefix="/custom-cakes", tags=["custom_cakes"])
-templates = Jinja2Templates(directory="templates")
 
 def generate_custom_cake_number(db: Session) -> str:
     last_item = db.query(CustomCakeOrder).order_by(CustomCakeOrder.id.desc()).first()

@@ -3,15 +3,14 @@ import datetime
 import pandas as pd
 from fastapi import APIRouter, Request, Depends, HTTPException, Response
 from fastapi.responses import HTMLResponse, StreamingResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import get_db
 from models import User, Order, OrderItem, Payment, Product, InventoryItem
 from utils.auth_helper import require_owner, get_shop_settings
+from utils.templating import templates
 
 router = APIRouter(prefix="/reports", tags=["reports"])
-templates = Jinja2Templates(directory="templates")
 
 def parse_date_range(period: str, start_date_str: str, end_date_str: str):
     now = datetime.datetime.now()

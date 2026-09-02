@@ -89,7 +89,12 @@
                   <td><span class="badge badge-{{ itm.status }}">{{ itm.status.title() }}</span></td>
                   {% if user and user.role == 'owner' %}
                     <td style="text-align: right;">
-                      <button type="button" class="btn btn-primary btn-sm" onclick='openStockActionModal({{ itm.id }}, "{{ itm.name|replace("\"", "\\\"") }}", {{ itm.current_qty }}, "{{ itm.unit }}")'>
+                      <button type="button" class="btn btn-primary btn-sm"
+                              data-item-id="{{ itm.id }}"
+                              data-item-name="{{ itm.name }}"
+                              data-item-qty="{{ itm.current_qty }}"
+                              data-item-unit="{{ itm.unit }}"
+                              onclick="openStockActionModal(this)">
                         ⚡ Quick Adjust
                       </button>
                     </td>
@@ -168,6 +173,7 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddInvModal()">✕</button>
     </div>
     <form action="/inventory/create" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" for="inv_name">Item Name *</label>
@@ -233,6 +239,7 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="closeStockActionModal()">✕</button>
     </div>
     <form id="stockActionForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="modal-body">
         
         <div style="background: var(--bg-main); padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px;">
@@ -275,10 +282,13 @@ function closeAddInvModal() {
   document.getElementById('addInvModal').style.display = 'none';
 }
 
-function openStockActionModal(id, name, currentQty, unit) {
-  document.getElementById('stockActionForm').action = `/inventory/${id}/stock-action`;
-  document.getElementById('stockActionTitle').innerText = `Stock Adjustment: ${name}`;
-  document.getElementById('stockActionCurrentQty').innerText = `${currentQty} ${unit}`;
+// Read from data-* attributes so item names containing quotes or backslashes
+// cannot break out of a JS string literal.
+function openStockActionModal(btn) {
+  const d = btn.dataset;
+  document.getElementById('stockActionForm').action = `/inventory/${d.itemId}/stock-action`;
+  document.getElementById('stockActionTitle').innerText = `Stock Adjustment: ${d.itemName}`;
+  document.getElementById('stockActionCurrentQty').innerText = `${d.itemQty} ${d.itemUnit}`;
   document.getElementById('stockActionModal').style.display = 'flex';
 }
 function closeStockActionModal() {

@@ -176,12 +176,10 @@
 async function updateOrderStatus() {
   const newStatus = document.getElementById('orderStatusSelect').value;
   try {
-    const res = await fetch('/orders/api/{{ order.id }}/status', {
+    const result = await apiFetch('/orders/api/{{ order.id }}/status', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
     });
-    const result = await res.json();
     if (result.success) {
       showToast("Order status updated to " + newStatus);
       setTimeout(() => window.location.reload(), 600);
@@ -189,7 +187,7 @@ async function updateOrderStatus() {
       showCustomAlert("Update Failed", result.error || "Unable to update status", "error");
     }
   } catch (err) {
-    showCustomAlert("Connection Error", err.message || "Network error", "error");
+    showCustomAlert("Update Failed", err.message || "Network error", "error");
   }
 }
 </script>

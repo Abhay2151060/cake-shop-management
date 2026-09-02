@@ -16,6 +16,9 @@ __pycache__/
 .env
 .env.*
 
+# Locally generated session signing key (never commit)
+.secret_key
+
 # IDE & Editor settings
 .vscode/
 .idea/

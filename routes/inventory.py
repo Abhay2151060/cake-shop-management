@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, InventoryItem, InventoryTransaction
 from utils.auth_helper import require_owner, require_login, get_shop_settings
 from utils.audit_helper import log_activity
+from utils.templating import templates
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
-templates = Jinja2Templates(directory="templates")
 
 @router.get("", response_class=HTMLResponse)
 def inventory_list_page(

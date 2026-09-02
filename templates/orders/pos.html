@@ -11,8 +11,8 @@
     
     <!-- Top Search & Category Filter Bar -->
     <div style="display: flex; gap: 12px; align-items: center;">
-      <div style="flex: 1; position: relative;">
-        <input type="text" id="posProductSearch" class="form-control" placeholder="🔍 Search cakes by name or SKU... (Type to filter)" autofocus>
+      <div style="max-width: 400px; width: 100%; position: relative;">
+        <input type="text" id="posProductSearch" class="form-control" placeholder="🔍 Search cakes by name or SKU..." autofocus>
       </div>
     </div>
 
@@ -26,7 +26,7 @@
 
     <!-- Products Grid -->
     <div class="pos-grid">
-      {% for prod in products %}
+      {% for prod in products|unique(attribute='id') %}
         <div class="pos-item-card" 
              data-id="{{ prod.id }}" 
              data-cat-id="{{ prod.category_id }}" 
@@ -48,9 +48,9 @@
             <div class="pos-item-name">{{ prod.name }}</div>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
             <div class="pos-item-price">₹{{ '{:,.2f}'.format(prod.selling_price) }}</div>
-            <button type="button" class="btn btn-primary btn-sm" style="padding: 4px 8px; border-radius: 6px;">
+            <button type="button" class="btn btn-primary btn-sm" style="padding: 6px 14px; min-height: 34px; font-weight: 600;">
               + Add
             </button>
           </div>
@@ -67,10 +67,10 @@
     <!-- Cart Header -->
     <div style="padding: 16px 18px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-main);">
       <div>
-        <h3 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+        <h2 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px; margin: 0;">
           <svg style="width: 20px; height: 20px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
           Current Order Cart
-        </h3>
+        </h2>
         <span id="cartItemCount" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">0 items</span>
       </div>
       <button type="button" class="btn btn-secondary btn-sm" onclick="clearCart()" title="Clear cart items" style="color: var(--danger);">
@@ -81,12 +81,12 @@
     <!-- Customer Details Form -->
     <div style="padding: 12px 18px; border-bottom: 1px solid var(--border-color); display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
       <div>
-        <label style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 2px;">Customer Name</label>
-        <input type="text" id="customerNameInput" class="form-control form-control-sm" placeholder="Walk-in Customer" style="padding: 6px 10px; font-size: 0.85rem;">
+        <label for="customerNameInput" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Customer Name</label>
+        <input type="text" id="customerNameInput" class="form-control form-control-sm" placeholder="Walk-in Customer" style="height: 36px; padding: 6px 10px; font-size: 0.85rem;">
       </div>
       <div>
-        <label style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 2px;">Phone (Optional)</label>
-        <input type="text" id="customerPhoneInput" class="form-control form-control-sm" placeholder="+91 XXXXX XXXXX" style="padding: 6px 10px; font-size: 0.85rem;">
+        <label for="customerPhoneInput" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Phone (Optional)</label>
+        <input type="text" id="customerPhoneInput" class="form-control form-control-sm" placeholder="+91 XXXXX XXXXX" style="height: 36px; padding: 6px 10px; font-size: 0.85rem;">
       </div>
     </div>
 
@@ -110,50 +110,51 @@
       </div>
 
       <!-- Payment Mode Selection -->
-      <div style="margin-bottom: 12px;">
-        <label style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Payment Status / Mode</label>
-        <div style="display: flex; gap: 8px;">
-          <label style="flex: 1; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 6px; text-align: center; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
-            <input type="radio" name="payment_status_type" value="paid" checked style="margin-right: 4px;"> Full Paid
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Payment Status / Mode</label>
+        <div style="display: flex; gap: 8px;" role="radiogroup" aria-label="Payment Status">
+          <label style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600;">
+            <input type="radio" name="payment_status_type" value="paid" checked> Full Paid
           </label>
-          <label style="flex: 1; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 6px; text-align: center; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
-            <input type="radio" name="payment_status_type" value="partial" style="margin-right: 4px;"> Partial
+          <label style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600;">
+            <input type="radio" name="payment_status_type" value="partial"> Partial
           </label>
-          <label style="flex: 1; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 6px; text-align: center; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
-            <input type="radio" name="payment_status_type" value="pending" style="margin-right: 4px;"> Udhaar
+          <label style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600;">
+            <input type="radio" name="payment_status_type" value="pending"> Udhaar
           </label>
         </div>
       </div>
 
       <!-- Payment Method & Paid Amount -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
         <div>
-          <label style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 2px;">Payment Method</label>
-          <select id="paymentMethodSelect" class="form-select" style="padding: 6px 10px; font-size: 0.85rem;">
+          <label for="paymentMethodSelect" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Payment Method</label>
+          <select id="paymentMethodSelect" class="form-select" style="height: 38px; padding: 6px 10px; font-size: 0.85rem; box-sizing: border-box;">
             <option value="cash">💵 Cash In Hand</option>
             <option value="upi">📱 Store UPI QR</option>
           </select>
         </div>
         <div>
-          <label style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 2px;">Amount Paid (₹)</label>
-          <input type="number" id="paidAmountInput" class="form-control" value="0" min="0" step="10" style="padding: 6px 10px; font-size: 0.85rem; font-weight: 700;">
+          <label for="paidAmountInput" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Amount Paid (₹)</label>
+          <input type="number" id="paidAmountInput" class="form-control" value="0" min="0" step="10" style="height: 38px; padding: 6px 10px; font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
         </div>
       </div>
 
       <!-- Balance Due Indicator -->
-      <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-main); padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-main); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; border: 1px solid var(--border-color);">
         <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Balance Pending:</span>
         <strong id="pendingAmountDisplay" style="color: #d97706; font-size: 1rem;">₹0.00</strong>
         <div id="orderPaymentBadge"><span class="badge badge-paid">Fully Paid</span></div>
       </div>
 
       <!-- Optional Order Notes -->
-      <div style="margin-bottom: 14px;">
-        <input type="text" id="orderNotesInput" class="form-control" placeholder="Order instructions or note (optional)" style="padding: 6px 10px; font-size: 0.82rem;">
+      <div style="margin-bottom: 16px;">
+        <label for="orderNotesInput" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Order Notes (Optional)</label>
+        <input type="text" id="orderNotesInput" class="form-control" placeholder="Order instructions or note" style="height: 36px; padding: 6px 10px; font-size: 0.82rem;">
       </div>
 
       <!-- Submit Order Action Button -->
-      <button type="button" id="submitOrderBtn" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 700; padding: 14px;" onclick="submitOrder()">
+      <button type="button" id="submitOrderBtn" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 700; padding: 14px; margin-top: 12px;" onclick="submitOrder()">
         <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
         </svg>

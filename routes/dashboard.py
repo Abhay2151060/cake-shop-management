@@ -1,7 +1,6 @@
 import datetime
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import get_db
@@ -9,9 +8,9 @@ from models import (
     User, Order, OrderItem, Payment, CustomCakeOrder, InventoryItem, Product
 )
 from utils.auth_helper import require_login, get_shop_settings
+from utils.templating import templates
 
 router = APIRouter(tags=["dashboard"])
-templates = Jinja2Templates(directory="templates")
 
 @router.get("/", response_class=HTMLResponse)
 def root_redirect(request: Request, db: Session = Depends(get_db)):

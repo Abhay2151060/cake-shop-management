@@ -3,16 +3,15 @@ import shutil
 import datetime
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, status, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, Product, Category, OrderItem
 from utils.auth_helper import require_owner, require_login, get_shop_settings
 from utils.audit_helper import log_activity
 from config import PRODUCT_UPLOAD_DIR
+from utils.templating import templates
 
 router = APIRouter(prefix="/products", tags=["products"])
-templates = Jinja2Templates(directory="templates")
 
 @router.get("", response_class=HTMLResponse)
 def products_list_page(

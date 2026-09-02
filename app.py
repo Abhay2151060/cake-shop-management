@@ -1,15 +1,14 @@
-import os
-from pathlib import Path
+import shutil
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from config import SECRET_KEY, BASE_DIR
+from config import SECRET_KEY, SESSION_HTTPS_ONLY, BASE_DIR
 from database import init_db
 from seed_data import seed
+from utils.security import CSRFMiddleware, SecurityHeadersMiddleware
 
 # Import modular routers
 from routes.auth import router as auth_router
@@ -33,9 +32,11 @@ async def lifespan(app: FastAPI):
         from database import SessionLocal
         from models import User
         db = SessionLocal()
-        if db.query(User).count() == 0:
-            seed()
-        db.close()
+        try:
+            if db.query(User).count() == 0:
+                seed()
+        finally:
+            db.close()
     except Exception as e:
         print(f"Startup check: {e}")
     yield
@@ -48,34 +49,32 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Enable signed session cookies
+# Middleware runs bottom-up: SessionMiddleware must be added last so that the
+# session is already populated when CSRFMiddleware inspects it.
+app.add_middleware(SecurityHeadersMiddleware, https_only=SESSION_HTTPS_ONLY)
+app.add_middleware(CSRFMiddleware)
 app.add_middleware(
     SessionMiddleware,
     secret_key=SECRET_KEY,
     session_cookie="cherry_session",
-    max_age=86400 * 7  # 7 days
+    max_age=86400 * 7,   # 7 days
+    same_site="lax",     # blocks the cookie on cross-site POSTs
+    https_only=SESSION_HTTPS_ONLY
 )
 
 # Ensure static directories exist
 static_dir = BASE_DIR / "static"
-static_dir.mkdir(parents=True, exist_ok=True)
-(static_dir / "css").mkdir(parents=True, exist_ok=True)
-(static_dir / "js").mkdir(parents=True, exist_ok=True)
-(static_dir / "uploads").mkdir(parents=True, exist_ok=True)
-(static_dir / "uploads" / "custom_cakes").mkdir(parents=True, exist_ok=True)
-(static_dir / "uploads" / "products").mkdir(parents=True, exist_ok=True)
+for sub in ("css", "js", "uploads", "uploads/custom_cakes", "uploads/products"):
+    (static_dir / sub).mkdir(parents=True, exist_ok=True)
 
 # Copy workspace logo.png to static/ if not present
 workspace_logo = BASE_DIR / "logo.png"
 static_logo = static_dir / "logo.png"
 if workspace_logo.exists() and not static_logo.exists():
-    import shutil
     shutil.copy(workspace_logo, static_logo)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
-
-templates = Jinja2Templates(directory="templates")
 
 # Register routers
 app.include_router(auth_router)

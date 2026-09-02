@@ -52,14 +52,25 @@
               <td style="font-size: 0.82rem; color: var(--text-muted);">{{ member.created_at.strftime('%d %b %Y') }}</td>
               <td style="text-align: right;">
                 <div style="display: inline-flex; gap: 6px;">
-                  <button type="button" class="btn btn-secondary btn-sm" onclick='openEditStaffModal({{ member.id }}, "{{ member.name|replace("\"", "\\\"") }}", "{{ member.email }}", "{{ member.phone or "" }}", "{{ member.role }}")'>
+                  <button type="button" class="btn btn-secondary btn-sm"
+                          data-user-id="{{ member.id }}"
+                          data-user-name="{{ member.name }}"
+                          data-user-email="{{ member.email }}"
+                          data-user-phone="{{ member.phone or '' }}"
+                          data-user-role="{{ member.role }}"
+                          data-user-username="{{ member.username }}"
+                          onclick="openEditStaffModal(this)">
                     Edit
                   </button>
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="openResetPasswordModal({{ member.id }}, '{{ member.username }}')">
+                  <button type="button" class="btn btn-secondary btn-sm"
+                          data-user-id="{{ member.id }}"
+                          data-user-username="{{ member.username }}"
+                          onclick="openResetPasswordModal(this)">
                     Reset Pwd
                   </button>
                   {% if member.id != user.id %}
                     <form action="/staff/{{ member.id }}/toggle-status" method="POST" style="display: inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                       <button type="submit" class="btn btn-secondary btn-sm" title="Toggle active status">
                         {{ 'Deactivate' if member.status == 'active' else 'Activate' }}
                       </button>
@@ -83,6 +94,7 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddStaffModal()">✕</button>
     </div>
     <form action="/staff/create" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" for="staff_name">Full Name *</label>
@@ -135,6 +147,7 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditStaffModal()">✕</button>
     </div>
     <form id="editStaffForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" for="edit_staff_name">Full Name *</label>
@@ -174,6 +187,7 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="closeResetPasswordModal()">✕</button>
     </div>
     <form id="resetPasswordForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" for="reset_new_pwd">New Password *</label>
@@ -196,21 +210,25 @@ function closeAddStaffModal() {
   document.getElementById('addStaffModal').style.display = 'none';
 }
 
-function openEditStaffModal(id, name, email, phone, role) {
-  document.getElementById('editStaffForm').action = `/staff/${id}/update`;
-  document.getElementById('edit_staff_name').value = name;
-  document.getElementById('edit_staff_email').value = email;
-  document.getElementById('edit_staff_phone').value = phone;
-  document.getElementById('edit_staff_role').value = role;
+// Values are read from data-* attributes instead of being interpolated into JS
+// string literals, so names/usernames containing quotes cannot inject script.
+function openEditStaffModal(btn) {
+  const d = btn.dataset;
+  document.getElementById('editStaffForm').action = `/staff/${d.userId}/update`;
+  document.getElementById('edit_staff_name').value = d.userName;
+  document.getElementById('edit_staff_email').value = d.userEmail;
+  document.getElementById('edit_staff_phone').value = d.userPhone;
+  document.getElementById('edit_staff_role').value = d.userRole;
   document.getElementById('editStaffModal').style.display = 'flex';
 }
 function closeEditStaffModal() {
   document.getElementById('editStaffModal').style.display = 'none';
 }
 
-function openResetPasswordModal(id, username) {
-  document.getElementById('resetPasswordForm').action = `/staff/${id}/reset-password`;
-  document.getElementById('resetPasswordTitle').innerText = `Reset Password for @${username}`;
+function openResetPasswordModal(btn) {
+  const d = btn.dataset;
+  document.getElementById('resetPasswordForm').action = `/staff/${d.userId}/reset-password`;
+  document.getElementById('resetPasswordTitle').innerText = `Reset Password for @${d.userUsername}`;
   document.getElementById('resetPasswordModal').style.display = 'flex';
 }
 function closeResetPasswordModal() {

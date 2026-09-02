@@ -60,13 +60,20 @@ async def test_full_application_flow():
         return response_status, resp_headers_dict, full_body, extracted_cookie
 
     # 1. Login Page
-    status, _, body, _ = await make_asgi_request("/login")
+    status, _, body, anon_cookie = await make_asgi_request("/login")
     assert status == 200, f"Failed GET /login: {status}"
     print("[PASS] GET /login: 200 OK")
+
+    import re
+    csrf_match = re.search(r'name="csrf_token"\s+value="([^"]+)"', body)
+    csrf_token = csrf_match.group(1) if csrf_match else ""
 
     # 2. POST /login with Owner Credentials
     boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
     payload = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="csrf_token"\r\n\r\n'
+        f"{csrf_token}\r\n"
         f"--{boundary}\r\n"
         f'Content-Disposition: form-data; name="username"\r\n\r\n'
         f"owner\r\n"
@@ -76,11 +83,13 @@ async def test_full_application_flow():
         f"--{boundary}--\r\n"
     ).encode("utf-8")
 
-    async def make_post_request(path: str, body_bytes: bytes, content_type: str):
+    async def make_post_request(path: str, body_bytes: bytes, content_type: str, session_cookie: str = None):
         headers_list = [
             (b"content-type", content_type.encode("latin1")),
             (b"content-length", str(len(body_bytes)).encode("latin1"))
         ]
+        if session_cookie:
+            headers_list.append((b"cookie", f"cherry_session={session_cookie}".encode("latin1")))
         scope = {
             "type": "http",
             "http_version": "1.1",
@@ -121,8 +130,8 @@ async def test_full_application_flow():
             cookie_val = cookie_header.split("cherry_session=")[1].split(";")[0]
         return response_status, resp_headers_dict, b"".join(response_body).decode("utf-8", errors="replace"), cookie_val
 
-    status, _, _, cookie = await make_post_request("/login", payload, f"multipart/form-data; boundary={boundary}")
-    assert status == 302, f"Expected 302 redirect after login, got {status}"
+    status, resp_headers, resp_body, cookie = await make_post_request("/login", payload, f"multipart/form-data; boundary={boundary}", anon_cookie)
+    assert status == 302, f"Expected 302 redirect after login, got {status}: {resp_body}"
     assert cookie is not None, "Expected session cookie from login"
     print(f"[PASS] POST /login: 302 Redirect (Session created)")
 

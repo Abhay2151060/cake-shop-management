@@ -1,6 +1,18 @@
 // POS System JavaScript Engine
 let cart = [];
 let currentCategory = 'all';
+// Guards against double submission from a rapid double-click or repeated F9.
+let isSubmitting = false;
+
+/** Escapes text before it is interpolated into an innerHTML string. */
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   setupProductCards();
@@ -37,7 +49,18 @@ function addToCart(itemOrId, name, price, sizeWeight, maxStock) {
     prodMaxStock = maxStock !== undefined ? maxStock : null;
   }
 
+  if (!Number.isFinite(productId)) return;
+
   const existing = cart.find(item => item.product_id === productId);
+  const alreadyInCart = existing ? existing.quantity : 0;
+
+  // Respect the product's available stock; the server enforces this too, but
+  // blocking it here avoids a wasted round-trip and a confusing rejection.
+  if (prodMaxStock !== null && Number.isFinite(prodMaxStock) && alreadyInCart + 1 > prodMaxStock) {
+    showToast(`Only ${prodMaxStock} unit(s) of ${prodName} available in stock`, 'warning');
+    return;
+  }
+
   if (existing) {
     existing.quantity += 1;
   } else {
@@ -58,12 +81,17 @@ function updateQuantity(productId, delta) {
   const item = cart.find(item => item.product_id === productId);
   if (!item) return;
 
-  item.quantity += delta;
-  if (item.quantity <= 0) {
+  const next = item.quantity + delta;
+  if (next <= 0) {
     removeFromCart(productId);
-  } else {
-    renderCart();
+    return;
   }
+  if (item.max_stock !== null && Number.isFinite(item.max_stock) && next > item.max_stock) {
+    showToast(`Only ${item.max_stock} unit(s) of ${item.name} available in stock`, 'warning');
+    return;
+  }
+  item.quantity = next;
+  renderCart();
 }
 
 function removeFromCart(productId) {
@@ -155,8 +183,8 @@ function renderCart() {
     html += `
       <div class="pos-cart-item">
         <div style="flex: 1; min-width: 0; padding-right: 8px;">
-          <div style="font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</div>
-          <div style="font-size: 0.78rem; color: var(--text-muted);">₹${item.price.toFixed(2)} × ${item.quantity} ${item.size_weight ? '(' + item.size_weight + ')' : ''}</div>
+          <div style="font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+          <div style="font-size: 0.78rem; color: var(--text-muted);">₹${item.price.toFixed(2)} × ${item.quantity} ${item.size_weight ? '(' + escapeHtml(item.size_weight) + ')' : ''}</div>
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
           <button type="button" class="btn btn-secondary btn-sm" style="width: 26px; height: 26px; padding: 0;" onclick="updateQuantity(${item.product_id}, -1)">-</button>
@@ -279,6 +307,8 @@ function flashItemAdded(productId) {
 }
 
 async function submitOrder() {
+  if (isSubmitting) return;
+
   if (cart.length === 0) {
     showCustomAlert("Cart is Empty", "Please select and add at least one item to the cart before submitting.", "warning");
     return;
@@ -320,16 +350,15 @@ async function submitOrder() {
     };
 
     const submitBtn = document.getElementById('submitOrderBtn');
+    isSubmitting = true;
     submitBtn.disabled = true;
     submitBtn.innerText = 'Processing Order...';
 
     try {
-      const res = await fetch('/orders/api/create', {
+      const result = await apiFetch('/orders/api/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const result = await res.json();
 
       if (result.success) {
         // Prompt modal with receipt options
@@ -344,9 +373,10 @@ async function submitOrder() {
       showCustomAlert("Order Failed", result.error || "Unable to complete order. Please check inventory levels.", "error");
     }
   } catch (err) {
-    showCustomAlert("Connection Error", err.message || "Failed to communicate with the server.", "error");
+    showCustomAlert("Order Failed", err.message || "Failed to communicate with the server.", "error");
   } finally {
-    submitBtn.disabled = false;
+    isSubmitting = false;
+    submitBtn.disabled = cart.length === 0;
     submitBtn.innerHTML = `
       <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -365,9 +395,9 @@ function showOrderSuccessModal(orderNumber, receiptUrl) {
             <svg style="width: 36px; height: 36px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
           </div>
           <h3 style="margin-bottom: 8px;">Order Placed!</h3>
-          <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">Order <strong>${orderNumber}</strong> was recorded successfully.</p>
+          <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">Order <strong>${escapeHtml(orderNumber)}</strong> was recorded successfully.</p>
           <div style="display: flex; flex-direction: column; gap: 10px;">
-            <a href="${receiptUrl}" target="_blank" class="btn btn-primary btn-lg">
+            <a href="${encodeURI(receiptUrl)}" target="_blank" rel="noopener" class="btn btn-primary btn-lg">
               <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
               Print Receipt / Invoice
             </a>
@@ -385,10 +415,26 @@ function closeSuccessModal() {
   if (modal) modal.remove();
 }
 
-// Keyboard shortcuts (F9 to complete order, Escape to clear)
+// Keyboard shortcuts: F9 completes the order, Escape closes the success modal.
 document.addEventListener('keydown', (e) => {
   if (e.key === 'F9') {
+    // Previously F9 fired even mid-typing in a text field, which could submit a
+    // half-entered order. Ignore it while a form control has focus.
+    const el = document.activeElement;
+    const inField = el && (
+      ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName) || el.isContentEditable
+    );
+    if (inField) return;
     e.preventDefault();
     submitOrder();
+    return;
+  }
+
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('orderSuccessModal');
+    if (modal) {
+      e.preventDefault();
+      closeSuccessModal();
+    }
   }
 });

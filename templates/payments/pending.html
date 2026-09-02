@@ -11,7 +11,7 @@
     <div>
       <div class="kpi-title">Total Outstanding Pending</div>
       <div class="kpi-value" style="color: #d97706;">₹{{ '{:,.2f}'.format(total_pending_amount) }}</div>
-      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Across {{ orders|length }} active orders</div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Across {{ total_pending_orders }} active orders</div>
     </div>
     <div class="kpi-icon-wrap" style="--icon-bg: #fffbeb; --icon-color: #f59e0b;">
       <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -100,7 +100,12 @@
                   </span>
                 </td>
                 <td style="text-align: right;">
-                  <button type="button" class="btn btn-accent btn-sm" onclick="openCollectModal({{ ord.id }}, '{{ ord.order_number }}', '{{ ord.customer_name|replace("'", "\\'") }}', {{ ord.pending_amount }})">
+                  <button type="button" class="btn btn-accent btn-sm"
+                          data-order-id="{{ ord.id }}"
+                          data-order-number="{{ ord.order_number }}"
+                          data-customer-name="{{ ord.customer_name }}"
+                          data-pending="{{ ord.pending_amount }}"
+                          onclick="openCollectModal(this)">
                     💰 Collect Payment
                   </button>
                 </td>
@@ -163,7 +168,15 @@
 <script>
 let maxCollectAmount = 0;
 
-function openCollectModal(orderId, orderNumber, customerName, pendingAmount) {
+// Values arrive via data-* attributes rather than being interpolated into a JS
+// string literal, so customer names containing quotes/backslashes cannot break
+// out of the call site.
+function openCollectModal(btn) {
+  const orderId = btn.dataset.orderId;
+  const orderNumber = btn.dataset.orderNumber;
+  const customerName = btn.dataset.customerName;
+  const pendingAmount = parseFloat(btn.dataset.pending) || 0;
+
   document.getElementById('modalOrderId').value = orderId;
   document.getElementById('modalOrderTitle').innerText = `Collect Payment: ${orderNumber}`;
   document.getElementById('modalCustomerName').innerText = customerName;
@@ -199,9 +212,8 @@ async function submitCollectPayment() {
   btn.innerText = 'Saving...';
 
   try {
-    const res = await fetch('/payments/api/record', {
+    const result = await apiFetch('/payments/api/record', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         order_id: parseInt(orderId),
         amount: amount,
@@ -209,7 +221,6 @@ async function submitCollectPayment() {
         notes: notes
       })
     });
-    const result = await res.json();
     if (result.success) {
       closeCollectModal();
       showToast("Payment recorded successfully!");
@@ -218,7 +229,7 @@ async function submitCollectPayment() {
       showCustomAlert("Payment Failed", result.error || "Failed to record payment", "error");
     }
   } catch (err) {
-    showCustomAlert("Connection Error", err.message || "Network error", "error");
+    showCustomAlert("Payment Failed", err.message || "Network error", "error");
   } finally {
     btn.disabled = false;
     btn.innerText = 'Record Payment';

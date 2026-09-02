@@ -113,6 +113,27 @@
           </tbody>
         </table>
       </div>
+
+      {% if total_pages > 1 %}
+        <nav aria-label="Order pages" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; border-top: 1px solid var(--border-color); flex-wrap: wrap;">
+          <span style="font-size: 0.85rem; color: var(--text-muted);">
+            Page {{ page }} of {{ total_pages }} &middot; {{ total_orders }} order(s)
+          </span>
+          <div style="display: inline-flex; gap: 8px;">
+            {% set qs = 'search=' ~ (search or '') ~ '&status_filter=' ~ (status_filter or '') ~ '&payment_filter=' ~ (payment_filter or '') %}
+            {% if page > 1 %}
+              <a href="/orders?{{ qs }}&page={{ page - 1 }}" class="btn btn-secondary btn-sm" rel="prev">&larr; Previous</a>
+            {% else %}
+              <span class="btn btn-secondary btn-sm" aria-disabled="true" style="opacity: 0.5; pointer-events: none;">&larr; Previous</span>
+            {% endif %}
+            {% if page < total_pages %}
+              <a href="/orders?{{ qs }}&page={{ page + 1 }}" class="btn btn-secondary btn-sm" rel="next">Next &rarr;</a>
+            {% else %}
+              <span class="btn btn-secondary btn-sm" aria-disabled="true" style="opacity: 0.5; pointer-events: none;">Next &rarr;</span>
+            {% endif %}
+          </div>
+        </nav>
+      {% endif %}
     {% else %}
       <div style="padding: 40px; text-align: center; color: var(--text-muted);">
         <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 6px;">No orders found.</p>

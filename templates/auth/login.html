@@ -14,7 +14,7 @@
       
       <!-- Brand Logo -->
       <div style="text-align: center; margin-bottom: 24px;">
-        <img src="/static/logo.png" alt="Cherry Blossom Logo" style="max-height: 68px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));">
+        <img src="/static/logo.png" alt="Cherry Blossom Logo" style="max-height: 68px; max-width: 100%; object-fit: contain;">
         <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 10px; font-weight: 500;">
           {{ settings.shop_tagline if settings and settings.shop_tagline else 'Cake Shop Management System' }}
         </p>
@@ -30,14 +30,15 @@
 
       <!-- Login Form -->
       <form action="/login" method="POST">
-        <div class="form-group">
-          <label class="form-label" for="username">Username or Email</label>
-          <input type="text" id="username" name="username" class="form-control" placeholder="Enter username / email" value="{{ username or '' }}" required autofocus>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="form-group" style="text-align: center;">
+          <label class="form-label" for="username" style="display: block; text-align: center;">Username or Email</label>
+          <input type="text" id="username" name="username" class="form-control" placeholder="Enter username / email" value="{{ username or '' }}" required autofocus style="text-align: center;">
         </div>
 
-        <div class="form-group" style="margin-bottom: 24px;">
-          <label class="form-label" for="password">Password</label>
-          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+        <div class="form-group" style="margin-bottom: 24px; text-align: center;">
+          <label class="form-label" for="password" style="display: block; text-align: center;">Password</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required style="text-align: center;">
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 700;">
@@ -47,7 +48,7 @@
 
       <!-- Demo Accounts Quick Fill -->
       <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center;">
-        <span style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 12px;">Quick Demo Accounts</span>
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 12px;">Quick Demo Accounts</span>
         <div style="display: flex; gap: 10px; justify-content: center;">
           <button type="button" class="btn btn-secondary btn-sm" onclick="fillCreds('owner', 'admin123')" style="font-size: 0.8rem;">
             👑 Owner Demo

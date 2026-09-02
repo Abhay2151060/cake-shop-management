@@ -17,9 +17,10 @@
 
     <div class="card-panel-body">
       <form action="/custom-cakes/create" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         
         <!-- Section 1: Customer Info -->
-        <h4 style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 14px;">1. Customer Details</h4>
+        <h2 style="font-size: 1rem; color: var(--text-muted); font-weight: 700; margin-bottom: 14px;">1. Customer Details</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
           <div class="form-group">
             <label class="form-label" for="customer_name">Customer Full Name *</label>
@@ -32,7 +33,7 @@
         </div>
 
         <!-- Section 2: Cake Specifications -->
-        <h4 style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 14px;">2. Cake Specifications & Design</h4>
+        <h2 style="font-size: 1rem; color: var(--text-muted); font-weight: 700; margin-bottom: 14px;">2. Cake Specifications & Design</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div class="form-group">
             <label class="form-label" for="flavor">Cake Flavor *</label>
@@ -82,7 +83,7 @@
         </div>
 
         <!-- Section 3: Delivery / Pickup Schedule -->
-        <h4 style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin: 24px 0 14px;">3. Delivery / Pickup Date & Time</h4>
+        <h2 style="font-size: 1rem; color: var(--text-muted); font-weight: 700; margin: 24px 0 14px;">3. Delivery / Pickup Date & Time</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div class="form-group">
             <label class="form-label" for="required_date">Pickup Date *</label>
@@ -100,28 +101,31 @@
         </div>
 
         <!-- Section 4: Pricing & Advance Payment -->
-        <h4 style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin: 24px 0 14px;">4. Pricing & Advance Deposit</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; background: var(--bg-main); padding: 18px; border-radius: var(--radius-sm); margin-bottom: 24px;">
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" for="estimated_price">Estimated Total (₹) *</label>
-            <input type="number" id="estimated_price" name="estimated_price" class="form-control" value="2000" min="0" step="50" oninput="calcPending()" required>
+        <h2 style="font-size: 1rem; color: var(--text-muted); font-weight: 700; margin: 24px 0 14px;">4. Pricing & Advance Deposit</h2>
+        <div style="background: var(--bg-main); padding: 18px; border-radius: var(--radius-sm); margin-bottom: 24px; border: 1px solid var(--border-color);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="estimated_price">Estimated Total (₹) *</label>
+              <input type="number" id="estimated_price" name="estimated_price" class="form-control" value="2000" min="0" step="50" oninput="calcPending()" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="advance_paid">Advance Deposit (₹)</label>
+              <input type="number" id="advance_paid" name="advance_paid" class="form-control" value="1000" min="0" step="50" oninput="calcPending()">
+            </div>
           </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" for="advance_paid">Advance Deposit (₹)</label>
-            <input type="number" id="advance_paid" name="advance_paid" class="form-control" value="1000" min="0" step="50" oninput="calcPending()">
-          </div>
-          <div class="form-group" style="margin-bottom: 0;">
+
+          <div class="form-group" style="margin-bottom: 16px;">
             <label class="form-label" for="payment_method">Deposit Mode</label>
             <select id="payment_method" name="payment_method" class="form-select">
               <option value="upi">📱 Store UPI QR</option>
               <option value="cash">💵 Cash In Hand</option>
             </select>
           </div>
-        </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 0 8px;">
-          <span style="font-weight: 700; font-size: 1.05rem;">Remaining Balance on Pickup:</span>
-          <strong id="customPendingDisplay" style="font-size: 1.3rem; color: #d97706; font-family: var(--font-heading);">₹1,000.00</strong>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--border-color);">
+            <span style="font-weight: 700; font-size: 1.05rem;">Remaining Balance on Pickup:</span>
+            <strong id="customPendingDisplay" style="font-size: 1.3rem; color: #d97706; font-family: var(--font-heading);">₹1,000.00</strong>
+          </div>
         </div>
 
         <!-- Submit Button -->

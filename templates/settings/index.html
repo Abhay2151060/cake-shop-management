@@ -14,6 +14,7 @@
     </div>
     <div class="card-panel-body">
       <form action="/settings/update" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div class="form-group">

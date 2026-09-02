@@ -52,15 +52,22 @@
                 {% if user and user.role == 'owner' %}
                   <td style="text-align: right;">
                     <div style="display: inline-flex; gap: 6px;">
-                      <button type="button" class="btn btn-secondary btn-sm" onclick='openEditCategoryModal({{ cat.id }}, "{{ cat.name|replace("\"", "\\\"") }}", "{{ cat.description or "" }}", "{{ cat.status }}")'>
+                      <button type="button" class="btn btn-secondary btn-sm"
+                              data-cat-id="{{ cat.id }}"
+                              data-cat-name="{{ cat.name }}"
+                              data-cat-desc="{{ cat.description or '' }}"
+                              data-cat-status="{{ cat.status }}"
+                              onclick="openEditCategoryModal(this)">
                         Edit
                       </button>
                       <form action="/categories/{{ cat.id }}/toggle-status" method="POST" style="display: inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         <button type="submit" class="btn btn-secondary btn-sm" title="Toggle active status">
                           {{ 'Deactivate' if cat.status == 'active' else 'Activate' }}
                         </button>
                       </form>
                       <form action="/categories/{{ cat.id }}/delete" method="POST" style="display: inline;" onsubmit="confirmDeleteCategory(event, this);">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         <button type="submit" class="btn btn-secondary btn-sm" style="color: var(--danger);" title="Delete category">
                           Delete
                         </button>
@@ -87,6 +94,7 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddCategoryModal()">✕</button>
     </div>
     <form action="/categories/create" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" for="add_cat_name">Category Name *</label>
@@ -113,6 +121,7 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditCategoryModal()">✕</button>
     </div>
     <form id="editCategoryForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" for="edit_cat_name">Category Name *</label>
@@ -146,11 +155,14 @@ function closeAddCategoryModal() {
   document.getElementById('addCategoryModal').style.display = 'none';
 }
 
-function openEditCategoryModal(id, name, desc, status) {
-  document.getElementById('editCategoryForm').action = `/categories/${id}/update`;
-  document.getElementById('edit_cat_name').value = name;
-  document.getElementById('edit_cat_desc').value = desc;
-  document.getElementById('edit_cat_status').value = status;
+// Read from data-* attributes so names containing quotes or backslashes cannot
+// break out of a JS string literal.
+function openEditCategoryModal(btn) {
+  const d = btn.dataset;
+  document.getElementById('editCategoryForm').action = `/categories/${d.catId}/update`;
+  document.getElementById('edit_cat_name').value = d.catName;
+  document.getElementById('edit_cat_desc').value = d.catDesc;
+  document.getElementById('edit_cat_status').value = d.catStatus;
   document.getElementById('editCategoryModal').style.display = 'flex';
 }
 function closeEditCategoryModal() {

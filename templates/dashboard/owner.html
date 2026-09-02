@@ -5,7 +5,7 @@
 
 {% block content %}
 <!-- KPI Cards Grid -->
-<div class="kpi-grid">
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
   
   <!-- Today's Sales -->
   <div class="kpi-card" style="--card-accent: #2563eb;">
@@ -103,7 +103,7 @@
         <svg style="width: 20px; height: 20px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
         7-Day Sales Trend (₹)
       </div>
-      <a href="/reports" class="btn btn-secondary btn-sm">Full Reports &rarr;</a>
+      <a href="/reports" class="btn btn-secondary btn-sm">Full Reports</a>
     </div>
     <div class="card-panel-body" style="height: 280px; position: relative;">
       <canvas id="salesTrendChart"></canvas>
@@ -152,7 +152,7 @@
           <tbody>
             {% for cc in upcoming_custom_cakes %}
               <tr>
-                <td><a href="/custom-cakes/{{ cc.id }}" style="font-weight: 700; color: var(--primary);">{{ cc.custom_order_number }}</a></td>
+                <td><a href="/custom-cakes/{{ cc.id }}" style="font-weight: 700; color: var(--primary); text-decoration: none;">{{ cc.custom_order_number }}</a></td>
                 <td>{{ cc.customer_name }}</td>
                 <td>{{ cc.flavor }} ({{ cc.weight }})</td>
                 <td>
@@ -174,7 +174,7 @@
   <div class="card-panel">
     <div class="card-panel-header">
       <div class="card-panel-title">
-        <svg style="width: 20px; height: 20px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <svg style="width: 20px; height: 20px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         Recent Walk-in Orders
       </div>
       <a href="/orders" class="btn btn-secondary btn-sm">All Orders</a>
@@ -186,19 +186,19 @@
             <tr>
               <th>Order ID</th>
               <th>Customer</th>
-              <th>Total</th>
+              <th style="text-align: right;">Total</th>
               <th>Payment</th>
-              <th>Receipt</th>
+              <th style="text-align: center;">Receipt</th>
             </tr>
           </thead>
           <tbody>
             {% for ord in recent_orders %}
               <tr>
-                <td><a href="/orders/{{ ord.id }}" style="font-weight: 700; color: var(--primary);">{{ ord.order_number }}</a></td>
+                <td><a href="/orders/{{ ord.id }}" style="font-weight: 700; color: var(--primary); text-decoration: none;">{{ ord.order_number }}</a></td>
                 <td>{{ ord.customer_name }}</td>
-                <td style="font-weight: 700;">₹{{ '{:,.2f}'.format(ord.grand_total) }}</td>
+                <td style="font-weight: 700; text-align: right;">₹{{ '{:,.2f}'.format(ord.grand_total) }}</td>
                 <td><span class="badge badge-{{ ord.payment_status }}">{{ ord.payment_status.replace('_', ' ').title() }}</span></td>
-                <td>
+                <td style="text-align: center;">
                   <a href="/orders/{{ ord.id }}/receipt" target="_blank" class="btn btn-secondary btn-sm" title="Print Invoice">
                     <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                   </a>

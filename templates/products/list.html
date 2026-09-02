@@ -79,10 +79,23 @@
                 {% if user and user.role == 'owner' %}
                   <td style="text-align: right;">
                     <div style="display: inline-flex; gap: 6px;">
-                      <button type="button" class="btn btn-secondary btn-sm" onclick='openEditProductModal({{ prod.id }}, "{{ prod.name|replace("\"", "\\\"") }}", {{ prod.category_id }}, "{{ prod.sku or "" }}", "{{ prod.description or "" }}", "{{ prod.size_weight }}", {{ prod.selling_price }}, {{ prod.cost_price }}, {{ prod.stock_qty }}, {{ prod.min_stock_level }}, "{{ prod.status }}")'>
+                      <button type="button" class="btn btn-secondary btn-sm"
+                              data-prod-id="{{ prod.id }}"
+                              data-prod-name="{{ prod.name }}"
+                              data-prod-cat-id="{{ prod.category_id }}"
+                              data-prod-sku="{{ prod.sku or '' }}"
+                              data-prod-desc="{{ prod.description or '' }}"
+                              data-prod-size="{{ prod.size_weight }}"
+                              data-prod-sell="{{ prod.selling_price }}"
+                              data-prod-cost="{{ prod.cost_price }}"
+                              data-prod-stock="{{ prod.stock_qty }}"
+                              data-prod-min="{{ prod.min_stock_level }}"
+                              data-prod-status="{{ prod.status }}"
+                              onclick="openEditProductModal(this)">
                         Edit
                       </button>
                       <form action="/products/{{ prod.id }}/toggle-status" method="POST" style="display: inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         <button type="submit" class="btn btn-secondary btn-sm" title="Toggle active status">
                           {{ 'Deactivate' if prod.status == 'active' else 'Activate' }}
                         </button>
@@ -109,6 +122,7 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddProductModal()">✕</button>
     </div>
     <form action="/products/create" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" for="add_name">Product Name *</label>
@@ -177,6 +191,7 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditProductModal()">✕</button>
     </div>
     <form id="editProductForm" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" for="edit_name">Product Name *</label>
@@ -252,18 +267,21 @@ function closeAddProductModal() {
   document.getElementById('addProductModal').style.display = 'none';
 }
 
-function openEditProductModal(id, name, catId, sku, desc, size, sellP, costP, stock, minS, status) {
-  document.getElementById('editProductForm').action = `/products/${id}/update`;
-  document.getElementById('edit_name').value = name;
-  document.getElementById('edit_category_id').value = catId;
-  document.getElementById('edit_sku').value = sku;
-  document.getElementById('edit_description').value = desc;
-  document.getElementById('edit_size_weight').value = size;
-  document.getElementById('edit_selling_price').value = sellP;
-  document.getElementById('edit_cost_price').value = costP;
-  document.getElementById('edit_stock_qty').value = stock;
-  document.getElementById('edit_min_stock_level').value = minS;
-  document.getElementById('edit_status').value = status;
+// Read from data-* attributes so product names containing quotes or backslashes
+// cannot break out of a JS string literal.
+function openEditProductModal(btn) {
+  const d = btn.dataset;
+  document.getElementById('editProductForm').action = `/products/${d.prodId}/update`;
+  document.getElementById('edit_name').value = d.prodName;
+  document.getElementById('edit_category_id').value = d.prodCatId;
+  document.getElementById('edit_sku').value = d.prodSku;
+  document.getElementById('edit_description').value = d.prodDesc;
+  document.getElementById('edit_size_weight').value = d.prodSize;
+  document.getElementById('edit_selling_price').value = d.prodSell;
+  document.getElementById('edit_cost_price').value = d.prodCost;
+  document.getElementById('edit_stock_qty').value = d.prodStock;
+  document.getElementById('edit_min_stock_level').value = d.prodMin;
+  document.getElementById('edit_status').value = d.prodStatus;
   document.getElementById('editProductModal').style.display = 'flex';
 }
 function closeEditProductModal() {

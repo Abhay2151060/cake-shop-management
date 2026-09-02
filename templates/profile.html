@@ -15,6 +15,7 @@
     </div>
     <div class="card-panel-body">
       <form action="/profile" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         
         <div class="form-group">
           <label class="form-label" for="profile_username">Username</label>
