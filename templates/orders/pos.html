@@ -9,22 +9,37 @@
   <!-- Left Side: Product Catalog & Fast Search -->
   <div class="pos-catalog">
     
-    <!-- Top Search & Category Filter Bar -->
-    <div style="display: flex; gap: 12px; align-items: center;">
-      <div style="max-width: 400px; width: 100%; position: relative;">
-        <input type="text" id="posProductSearch" class="form-control" placeholder="🔍 Search cakes by name or SKU..." autofocus>
-      </div>
+    <!-- Top Search Bar with keyboard hint -->
+    <div class="pos-search-wrapper">
+      <svg class="pos-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input type="text" id="posProductSearch" class="form-control pos-search-input" placeholder="Search cakes by name or SKU..." autofocus>
+      <kbd class="pos-search-kbd">/</kbd>
     </div>
 
-    <!-- Category Pills -->
+    <!-- Category Pills with bakery themed icons -->
     <div class="pos-categories-bar">
-      <button type="button" class="pos-cat-pill active" data-cat-id="all">All Products</button>
+      <button type="button" class="pos-cat-pill active" data-cat-id="all">
+        <span>✨</span> All Products
+      </button>
       {% for cat in categories %}
-        <button type="button" class="pos-cat-pill" data-cat-id="{{ cat.id }}">{{ cat.name }}</button>
+        <button type="button" class="pos-cat-pill" data-cat-id="{{ cat.id }}">
+          <span>
+            {% if 'chocolate' in cat.name.lower() %}🍫
+            {% elif 'birthday' in cat.name.lower() %}🎂
+            {% elif 'anniversary' in cat.name.lower() %}💖
+            {% elif 'eggless' in cat.name.lower() or 'vegan' in cat.name.lower() %}🌿
+            {% elif 'fruit' in cat.name.lower() or 'floral' in cat.name.lower() %}🍓
+            {% elif 'pastr' in cat.name.lower() or 'dessert' in cat.name.lower() %}🧁
+            {% else %}🍰{% endif %}
+          </span>
+          {{ cat.name }}
+        </button>
       {% endfor %}
     </div>
 
-    <!-- Products Grid -->
+    <!-- Products Grid with modern cards -->
     <div class="pos-grid">
       {% for prod in products|unique(attribute='id') %}
         <div class="pos-item-card" 
@@ -37,21 +52,26 @@
              data-stock="{{ prod.stock_qty if prod.stock_qty is not none else '' }}">
           
           <div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 4px; margin-bottom: 4px;">
-              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">{{ prod.size_weight }}</span>
+            <div class="pos-item-header">
+              <span class="pos-item-size-badge">{{ prod.size_weight or '1 Unit' }}</span>
               {% if prod.stock_qty is not none %}
-                <span class="badge {% if prod.is_low_stock %}badge-low_stock{% else %}badge-active{% endif %}" style="font-size: 0.65rem; padding: 2px 6px;">
-                  {{ prod.stock_qty }} in stock
+                <span class="badge {% if prod.is_low_stock %}badge-low_stock{% else %}badge-active{% endif %}" style="font-size: 0.65rem; padding: 2px 7px; border-radius: 9999px;">
+                  {% if prod.is_low_stock %}⚠️ {{ prod.stock_qty }} left{% else %}● {{ prod.stock_qty }} in stock{% endif %}
                 </span>
               {% endif %}
             </div>
-            <div class="pos-item-name">{{ prod.name }}</div>
+            
+            <div class="pos-item-name" title="{{ prod.name }}">{{ prod.name }}</div>
+            {% if prod.sku %}
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-family: monospace;">{{ prod.sku }}</div>
+            {% endif %}
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+          <div class="pos-item-footer">
             <div class="pos-item-price">₹{{ '{:,.2f}'.format(prod.selling_price) }}</div>
-            <button type="button" class="btn btn-primary btn-sm" style="padding: 6px 14px; min-height: 34px; font-weight: 600;">
-              + Add
+            <button type="button" class="pos-add-btn">
+              <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+              Add
             </button>
           </div>
 
@@ -61,32 +81,41 @@
 
   </div>
 
-  <!-- Right Side: Order Cart & Payment Settlement -->
+  <!-- Right Side: Redesigned Order Cart & Payment Settlement -->
   <div class="pos-cart-panel">
     
     <!-- Cart Header -->
-    <div style="padding: 16px 18px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-main);">
-      <div>
-        <h2 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px; margin: 0;">
-          <svg style="width: 20px; height: 20px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-          Current Order Cart
-        </h2>
-        <span id="cartItemCount" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">0 items</span>
+    <div class="pos-cart-header">
+      <div class="pos-cart-title">
+        <div class="pos-cart-icon-wrap">
+          <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+          </svg>
+        </div>
+        <div>
+          <h2 style="font-size: 1.02rem; margin: 0; font-weight: 700;">Order Cart</h2>
+          <div style="display: flex; align-items: center; gap: 6px; margin-top: 1px;">
+            <span id="cartItemCount" class="pos-cart-items-count">0 items</span>
+          </div>
+        </div>
       </div>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="clearCart()" title="Clear cart items" style="color: var(--danger);">
+      <button type="button" class="pos-cart-clear-btn" onclick="clearCart()" title="Clear all cart items">
+        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         Clear
       </button>
     </div>
 
     <!-- Customer Details Form -->
-    <div style="padding: 12px 18px; border-bottom: 1px solid var(--border-color); display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-      <div>
-        <label for="customerNameInput" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Customer Name</label>
-        <input type="text" id="customerNameInput" class="form-control form-control-sm" placeholder="Walk-in Customer" style="height: 36px; padding: 6px 10px; font-size: 0.85rem;">
-      </div>
-      <div>
-        <label for="customerPhoneInput" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Phone (Optional)</label>
-        <input type="text" id="customerPhoneInput" class="form-control form-control-sm" placeholder="+91 XXXXX XXXXX" style="height: 36px; padding: 6px 10px; font-size: 0.85rem;">
+    <div class="pos-customer-section">
+      <div class="pos-customer-grid">
+        <div class="pos-input-group">
+          <span class="input-icon">👤</span>
+          <input type="text" id="customerNameInput" class="pos-customer-input" placeholder="Walk-in Customer" title="Customer Name">
+        </div>
+        <div class="pos-input-group">
+          <span class="input-icon">📞</span>
+          <input type="text" id="customerPhoneInput" class="pos-customer-input" placeholder="Phone (Optional)" title="Customer Phone">
+        </div>
       </div>
     </div>
 
@@ -99,66 +128,73 @@
     <div class="pos-cart-summary">
       
       <!-- Subtotal -->
-      <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px;">
-        <span style="color: var(--text-muted);">Items Subtotal:</span>
-        <strong id="subtotalDisplay" style="font-size: 1rem;">₹0.00</strong>
+      <div class="pos-totals-row">
+        <span style="color: var(--text-muted); font-weight: 500;">Items Subtotal:</span>
+        <span id="subtotalDisplay" style="font-weight: 700; color: var(--text-main);">₹0.00</span>
       </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 2px dashed var(--border-color); margin-bottom: 14px;">
-        <span style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">Grand Total:</span>
-        <strong id="grandTotalDisplay" style="font-size: 1.35rem; color: var(--primary); font-family: var(--font-heading);">₹0.00</strong>
+      <!-- Grand Total Card -->
+      <div class="pos-grand-total-card">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; letter-spacing: 0.04em;">Grand Total</span>
+          <span style="font-size: 0.72rem; color: var(--text-muted);">Taxes included</span>
+        </div>
+        <strong id="grandTotalDisplay" class="pos-grand-total-amount">₹0.00</strong>
       </div>
 
-      <!-- Payment Mode Selection -->
-      <div style="margin-bottom: 14px;">
-        <label style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Payment Status / Mode</label>
-        <div style="display: flex; gap: 8px;" role="radiogroup" aria-label="Payment Status">
-          <label style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600;">
-            <input type="radio" name="payment_status_type" value="paid" checked> Full Paid
+      <!-- Payment Mode Segmented Tabs -->
+      <div>
+        <label style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px; letter-spacing: 0.03em;">Payment Status</label>
+        <div class="pos-payment-tabs" role="radiogroup" aria-label="Payment Status">
+          <label class="pos-payment-tab" title="Full Payment Received">
+            <input type="radio" name="payment_status_type" value="paid" checked>
+            <span>✓ Full Paid</span>
           </label>
-          <label style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600;">
-            <input type="radio" name="payment_status_type" value="partial"> Partial
+          <label class="pos-payment-tab" title="Partial Advance Payment">
+            <input type="radio" name="payment_status_type" value="partial">
+            <span>◐ Partial</span>
           </label>
-          <label style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600;">
-            <input type="radio" name="payment_status_type" value="pending"> Udhaar
+          <label class="pos-payment-tab" title="Credit / Pay Later">
+            <input type="radio" name="payment_status_type" value="pending">
+            <span>○ Udhaar</span>
           </label>
         </div>
       </div>
 
       <!-- Payment Method & Paid Amount -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+      <div class="pos-payment-inputs">
         <div>
-          <label for="paymentMethodSelect" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Payment Method</label>
-          <select id="paymentMethodSelect" class="form-select" style="height: 38px; padding: 6px 10px; font-size: 0.85rem; box-sizing: border-box;">
+          <label for="paymentMethodSelect" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 3px;">Payment Method</label>
+          <select id="paymentMethodSelect" class="form-select form-control-sm" style="height: 36px; padding: 4px 8px; font-size: 0.82rem;">
             <option value="cash">💵 Cash In Hand</option>
             <option value="upi">📱 Store UPI QR</option>
           </select>
         </div>
         <div>
-          <label for="paidAmountInput" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Amount Paid (₹)</label>
-          <input type="number" id="paidAmountInput" class="form-control" value="0" min="0" step="10" style="height: 38px; padding: 6px 10px; font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
+          <label for="paidAmountInput" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 3px;">Amount Paid (₹)</label>
+          <input type="number" id="paidAmountInput" class="form-control form-control-sm" value="0" min="0" step="10" style="height: 36px; padding: 4px 8px; font-size: 0.85rem; font-weight: 700;">
         </div>
       </div>
 
       <!-- Balance Due Indicator -->
-      <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-main); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; border: 1px solid var(--border-color);">
-        <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Balance Pending:</span>
-        <strong id="pendingAmountDisplay" style="color: #d97706; font-size: 1rem;">₹0.00</strong>
-        <div id="orderPaymentBadge"><span class="badge badge-paid">Fully Paid</span></div>
+      <div class="pos-balance-bar">
+        <span style="color: var(--text-muted); font-weight: 600;">Balance Due:</span>
+        <strong id="pendingAmountDisplay" style="color: #d97706; font-size: 0.95rem;">₹0.00</strong>
+        <div id="orderPaymentBadge"><span class="badge badge-paid" style="font-size: 0.72rem; padding: 2px 8px;">Fully Paid</span></div>
       </div>
 
       <!-- Optional Order Notes -->
-      <div style="margin-bottom: 16px;">
-        <label for="orderNotesInput" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Order Notes (Optional)</label>
-        <input type="text" id="orderNotesInput" class="form-control" placeholder="Order instructions or note" style="height: 36px; padding: 6px 10px; font-size: 0.82rem;">
+      <div style="position: relative;">
+        <input type="text" id="orderNotesInput" class="form-control form-control-sm" placeholder="📝 Add order notes / instructions (optional)..." style="height: 32px; font-size: 0.8rem; padding: 4px 10px; background: var(--bg-main);">
       </div>
 
       <!-- Submit Order Action Button -->
-      <button type="button" id="submitOrderBtn" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 700; padding: 14px; margin-top: 12px;" onclick="submitOrder()">
-        <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      <button type="button" id="submitOrderBtn" class="pos-submit-btn" onclick="submitOrder()">
+        <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
         </svg>
-        Complete Order (F9)
+        <span>Complete Order</span>
+        <kbd class="kbd-pill">F9</kbd>
       </button>
 
     </div>

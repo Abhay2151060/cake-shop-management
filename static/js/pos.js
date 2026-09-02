@@ -19,8 +19,33 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCategoryFilters();
   setupSearch();
   setupPaymentControls();
+  setupKeyboardShortcuts();
   renderCart();
 });
+
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F9') {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitOrderBtn');
+      if (submitBtn && !submitBtn.disabled) {
+        submitOrder();
+      }
+      return;
+    }
+    if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+      e.preventDefault();
+      const searchInput = document.getElementById('posProductSearch');
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.select();
+      }
+    }
+    if (e.key === 'Escape' && document.activeElement?.id === 'posProductSearch') {
+      document.activeElement.blur();
+    }
+  });
+}
 
 function setupProductCards() {
   document.querySelectorAll('.pos-item-card').forEach(card => {
@@ -152,12 +177,12 @@ function renderCart() {
 
   if (cart.length === 0) {
     cartContainer.innerHTML = `
-      <div style="text-align: center; color: var(--text-muted); padding: 40px 10px;">
-        <svg style="width: 48px; height: 48px; opacity: 0.3; margin-bottom: 8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-        </svg>
-        <p style="font-weight: 500;">Cart is empty</p>
-        <p style="font-size: 0.8rem;">Click products on the left to add</p>
+      <div style="text-align: center; color: var(--text-muted); padding: 32px 10px; margin: auto;">
+        <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--bg-card); border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; font-size: 1.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+          🎂
+        </div>
+        <p style="font-weight: 700; font-size: 0.92rem; color: var(--text-main); margin-bottom: 3px;">Cart is empty</p>
+        <p style="font-size: 0.78rem; color: var(--text-muted); max-width: 200px; margin: 0 auto; line-height: 1.4;">Click any cake from the catalog to add to order</p>
       </div>
     `;
     cartCountElem.innerText = '0 items';
@@ -183,16 +208,26 @@ function renderCart() {
     html += `
       <div class="pos-cart-item">
         <div style="flex: 1; min-width: 0; padding-right: 8px;">
-          <div style="font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
-          <div style="font-size: 0.78rem; color: var(--text-muted);">₹${item.price.toFixed(2)} × ${item.quantity} ${item.size_weight ? '(' + escapeHtml(item.size_weight) + ')' : ''}</div>
+          <div style="font-weight: 700; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); margin-bottom: 2px;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-muted);">
+            <span>₹${item.price.toFixed(2)}</span>
+            ${item.size_weight ? `<span class="pos-item-size-badge" style="padding: 0 5px; font-size: 0.68rem;">${escapeHtml(item.size_weight)}</span>` : ''}
+          </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <button type="button" class="btn btn-secondary btn-sm" style="width: 26px; height: 26px; padding: 0;" onclick="updateQuantity(${item.product_id}, -1)">-</button>
-          <span style="font-weight: 700; font-size: 0.9rem; min-width: 18px; text-align: center;">${item.quantity}</span>
-          <button type="button" class="btn btn-secondary btn-sm" style="width: 26px; height: 26px; padding: 0;" onclick="updateQuantity(${item.product_id}, 1)">+</button>
-          <div style="font-weight: 800; font-size: 0.95rem; min-width: 65px; text-align: right; color: var(--text-main);">₹${itemTotal.toFixed(2)}</div>
-          <button type="button" class="btn btn-sm" style="color: var(--danger); background: transparent; padding: 4px;" onclick="removeFromCart(${item.product_id})">
-            <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div class="pos-stepper">
+            <button type="button" class="pos-stepper-btn" onclick="updateQuantity(${item.product_id}, -1)" title="Decrease quantity">−</button>
+            <span class="pos-stepper-qty">${item.quantity}</span>
+            <button type="button" class="pos-stepper-btn" onclick="updateQuantity(${item.product_id}, 1)" title="Increase quantity">+</button>
+          </div>
+          
+          <div style="font-weight: 800; font-size: 0.92rem; min-width: 60px; text-align: right; color: var(--cherry); font-family: var(--font-heading);">
+            ₹${itemTotal.toFixed(2)}
+          </div>
+          
+          <button type="button" style="color: var(--text-muted); background: transparent; border: none; padding: 4px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease;" onmouseover="this.style.color='var(--danger)'; this.style.background='var(--danger-light)';" onmouseout="this.style.color='var(--text-muted)'; this.style.background='transparent';" onclick="removeFromCart(${item.product_id})" title="Remove item">
+            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
       </div>
