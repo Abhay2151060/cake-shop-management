@@ -1,5 +1,3 @@
-import sys
-import datetime
 from database import SessionLocal, init_db
 from seed_data import seed
 from models import User, Category, Product, Order, OrderItem, Payment, CustomCakeOrder, InventoryItem

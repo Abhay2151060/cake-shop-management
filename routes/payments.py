@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Depends, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from database import get_db
 from models import User, Order, Payment
 from utils.auth_helper import require_login, get_shop_settings
@@ -36,7 +37,6 @@ def pending_payments_page(
 
     # The KPI totals must reflect every pending order, not just the rows shown,
     # so they are aggregated in SQL rather than over a truncated Python list.
-    from sqlalchemy import func
     totals = db.query(
         func.coalesce(func.sum(Order.pending_amount), 0.0),
         func.count(Order.id)

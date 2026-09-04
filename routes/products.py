@@ -1,8 +1,8 @@
 import os
 import shutil
 import datetime
-from fastapi import APIRouter, Request, Depends, Form, HTTPException, status, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi import APIRouter, Request, Depends, Form, status, UploadFile, File
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, Product, Category, OrderItem
