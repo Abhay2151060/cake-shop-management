@@ -8,6 +8,7 @@ from models import (
     User, Order, OrderItem, Payment, CustomCakeOrder, InventoryItem, Product
 )
 from utils.auth_helper import require_login, get_shop_settings
+from utils.time_helper import local_today, local_day_bounds_utc
 from utils.templating import templates
 
 router = APIRouter(tags=["dashboard"])
@@ -19,9 +20,8 @@ def root_redirect(request: Request, db: Session = Depends(get_db)):
 @router.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, user: User = Depends(require_login), db: Session = Depends(get_db)):
     settings = get_shop_settings(db)
-    now = datetime.datetime.now()
-    today_start = datetime.datetime(now.year, now.month, now.day, 0, 0, 0)
-    today_end = datetime.datetime(now.year, now.month, now.day, 23, 59, 59)
+    today = local_today()
+    today_start, today_end = local_day_bounds_utc(today)
 
     # 1. Today's metrics (excluding cancelled orders)
     today_orders_query = db.query(Order).filter(
@@ -53,10 +53,6 @@ def dashboard(request: Request, user: User = Depends(require_login), db: Session
         Order.order_status != "cancelled"
     ).scalar() or 0.0
 
-    # Active / Current orders (not completed & not cancelled)
-    current_orders_count = db.query(Order).filter(
-        Order.order_status.in_(["new", "confirmed", "preparing", "ready"])
-    ).count()
 
     # Active Custom Cake Orders
     custom_cake_count = db.query(CustomCakeOrder).filter(
@@ -86,7 +82,6 @@ def dashboard(request: Request, user: User = Depends(require_login), db: Session
         "cash_collection": round(today_cash_coll, 2),
         "upi_collection": round(today_upi_coll, 2),
         "pending_amount": round(total_pending_amount, 2),
-        "current_orders": current_orders_count,
         "custom_cake_orders": custom_cake_count,
         "low_stock_count": total_low_stock_count
     }
@@ -116,15 +111,14 @@ def dashboard(request: Request, user: User = Depends(require_login), db: Session
 @router.get("/api/analytics/charts")
 def analytics_charts_data(user: User = Depends(require_login), db: Session = Depends(get_db)):
     # 7-day sales trend
-    today = datetime.date.today()
+    today = local_today()
     sales_labels = []
     sales_values = []
     order_counts = []
 
     for i in range(6, -1, -1):
         day = today - datetime.timedelta(days=i)
-        day_start = datetime.datetime(day.year, day.month, day.day, 0, 0, 0)
-        day_end = datetime.datetime(day.year, day.month, day.day, 23, 59, 59)
+        day_start, day_end = local_day_bounds_utc(day)
 
         day_total = db.query(func.sum(Order.grand_total)).filter(
             Order.created_at >= day_start,

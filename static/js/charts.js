@@ -24,13 +24,15 @@ async function loadChartData() {
           datasets: [{
             label: 'Sales (₹)',
             data: data.sales_trend.sales,
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            borderColor: '#e11d48',
+            backgroundColor: 'rgba(225, 29, 72, 0.08)',
             fill: true,
             tension: 0.35,
-            pointRadius: 5,
-            pointHoverRadius: 7,
-            pointBackgroundColor: '#1e3a8a'
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#e11d48',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2
           }]
         },
         options: {

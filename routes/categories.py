@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from database import get_db
 from models import User, Category, Product
 from utils.auth_helper import require_owner, require_login, get_shop_settings
@@ -14,11 +15,9 @@ def categories_list_page(request: Request, user: User = Depends(require_login), 
     settings = get_shop_settings(db)
     categories = db.query(Category).order_by(Category.name.asc()).all()
 
-    # Map product counts
-    cat_counts = {}
-    for cat in categories:
-        cnt = db.query(Product).filter(Product.category_id == cat.id).count()
-        cat_counts[cat.id] = cnt
+    # Map product counts with a single aggregation query
+    counts_rows = db.query(Product.category_id, func.count(Product.id)).group_by(Product.category_id).all()
+    cat_counts = {cid: cnt for cid, cnt in counts_rows if cid is not None}
 
     return templates.TemplateResponse(request=request, name="categories/list.html", context={
         "request": request,
@@ -64,7 +63,7 @@ def category_update(
     request: Request,
     name: str = Form(...),
     description: str = Form(None),
-    status: str = Form("active"),
+    cat_status: str = Form("active", alias="status"),
     user: User = Depends(require_owner),
     db: Session = Depends(get_db)
 ):
@@ -80,7 +79,7 @@ def category_update(
 
     cat.name = name_clean
     cat.description = description.strip() if description else None
-    cat.status = status
+    cat.status = cat_status
     db.commit()
 
     log_activity(db, action="Category Updated", module="Categories", record_id=cat.id, details=f"Updated category {cat.name}", user=user, request=request)

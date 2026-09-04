@@ -5,18 +5,18 @@
 
 {% block content %}
 <!-- Quick Operational Action Hub -->
-<div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 28px; border-radius: var(--radius-lg); margin-bottom: 24px; box-shadow: var(--shadow-md); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+<div style="background: linear-gradient(135deg, #090d16 0%, #111827 55%, rgba(225, 29, 72, 0.45) 100%); color: white; padding: 28px; border-radius: var(--radius-lg); margin-bottom: 24px; box-shadow: var(--shadow-md); border: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
   <div>
-    <h3 style="color: white; font-size: 1.5rem; margin-bottom: 6px;">Welcome, {{ user.name }}!</h3>
-    <p style="color: #bfdbfe; font-size: 0.95rem;">Ready to record in-store cake sales and custom cake bookings.</p>
+    <h3 style="color: white; font-size: 1.45rem; margin-bottom: 6px; font-family: 'Outfit', sans-serif;">Welcome, {{ user.name }}!</h3>
+    <p style="color: #cbd5e1; font-size: 0.92rem;">Ready to record in-store cake sales and custom cake bookings.</p>
   </div>
   <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-    <a href="/orders/pos" class="btn btn-accent btn-lg" style="box-shadow: 0 4px 12px rgba(245,158,11,0.4); font-weight: 700;">
-      <svg style="width: 22px; height: 22px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    <a href="/orders/pos" class="btn btn-cherry btn-lg" style="box-shadow: 0 4px 14px rgba(225,29,72,0.4); font-weight: 700;">
+      <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
       Open New POS Order
     </a>
-    <a href="/custom-cakes/create" class="btn btn-cherry btn-lg" style="box-shadow: 0 4px 12px rgba(225,29,72,0.4); font-weight: 700;">
-      <svg style="width: 22px; height: 22px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z"/></svg>
+    <a href="/custom-cakes/create" class="btn btn-secondary btn-lg" style="background: rgba(255, 255, 255, 0.12); color: white; border-color: rgba(255, 255, 255, 0.2); font-weight: 700;">
+      <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z"/></svg>
       Book Custom Cake
     </a>
   </div>
@@ -35,16 +35,6 @@
     </div>
   </div>
 
-  <div class="kpi-card" style="--card-accent: #9333ea;">
-    <div>
-      <div class="kpi-title">Active Queue Orders</div>
-      <div class="kpi-value">{{ kpis.current_orders }}</div>
-      <div style="font-size: 0.78rem; margin-top: 4px;"><a href="/orders/current" style="color: #9333ea; font-weight: 700; text-decoration: underline;">View active kitchen queue &rarr;</a></div>
-    </div>
-    <div class="kpi-icon-wrap" style="--icon-bg: #fdf4ff; --icon-color: #9333ea;">
-      <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-    </div>
-  </div>
 
   <div class="kpi-card" style="--card-accent: #e11d48;">
     <div>
@@ -59,17 +49,17 @@
 
 </div>
 
-<!-- Recent Queue & Custom Cakes -->
+<!-- Recent Orders & Custom Cakes -->
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
   
-  <!-- Active Queue List -->
+  <!-- Recent Orders List -->
   <div class="card-panel">
     <div class="card-panel-header">
       <div class="card-panel-title">
-        <svg style="width: 20px; height: 20px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        Current Orders Queue
+        <svg style="width: 20px; height: 20px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Recent In-Store Orders
       </div>
-      <a href="/orders/current" class="btn btn-secondary btn-sm">Full Queue</a>
+      <a href="/orders" class="btn btn-secondary btn-sm">All Orders</a>
     </div>
     <div class="card-panel-body" style="padding: 0;">
       {% if recent_orders %}
@@ -96,7 +86,7 @@
           </tbody>
         </table>
       {% else %}
-        <div style="padding: 30px; text-align: center; color: var(--text-muted);">No active orders in queue.</div>
+        <div style="padding: 30px; text-align: center; color: var(--text-muted);">No walk-in orders recorded yet.</div>
       {% endif %}
     </div>
   </div>

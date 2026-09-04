@@ -1,3 +1,4 @@
+import logging
 import shutil
 from contextlib import asynccontextmanager
 
@@ -24,6 +25,8 @@ from routes.settings import router as settings_router
 from routes.staff import router as staff_router
 from routes.audit import router as audit_router
 
+logger = logging.getLogger(__name__)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize DB and seed demo data if needed
@@ -38,7 +41,7 @@ async def lifespan(app: FastAPI):
         finally:
             db.close()
     except Exception as e:
-        print(f"Startup check: {e}")
+        logger.warning(f"Startup check: {e}")
     yield
     # Shutdown logic if any
 

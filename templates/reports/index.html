@@ -117,7 +117,7 @@
               {% for ord in orders %}
                 <tr>
                   <td><a href="/orders/{{ ord.id }}" style="font-weight: 700; color: var(--primary);">{{ ord.order_number }}</a></td>
-                  <td style="font-size: 0.82rem; color: var(--text-muted);">{{ ord.created_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                  <td style="font-size: 0.82rem; color: var(--text-muted);">{{ (ord.created_at | localtime).strftime('%d %b %Y, %I:%M %p') if ord.created_at else '' }}</td>
                   <td>{{ ord.customer_name }}</td>
                   <td>₹{{ '{:,.2f}'.format(ord.subtotal) }}</td>
                   <td style="font-weight: 800;">₹{{ '{:,.2f}'.format(ord.grand_total) }}</td>

@@ -1,4 +1,3 @@
-import os
 import datetime
 from sqlalchemy.orm import Session
 from database import SessionLocal, init_db

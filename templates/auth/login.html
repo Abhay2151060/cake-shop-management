@@ -3,63 +3,176 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | {{ settings.shop_name if settings else 'Cherry Blossom Cake Shop' }}</title>
+  <title>Sign In | {{ settings.shop_name if settings else 'Cherry Blossom' }}</title>
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="icon" type="image/png" href="/static/logo.png">
+  <style>
+    .auth-canvas {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      position: relative;
+      background: radial-gradient(circle at 10% 20%, rgba(225, 29, 72, 0.12) 0%, transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(217, 119, 6, 0.10) 0%, transparent 40%),
+                  linear-gradient(135deg, #090d16 0%, #111827 50%, #06090e 100%);
+      overflow: hidden;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-xl);
+      padding: 40px 36px;
+      box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      position: relative;
+      z-index: 10;
+      transition: transform 0.2s ease;
+    }
+
+    [data-theme="dark"] .auth-card {
+      background: rgba(15, 22, 36, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    .auth-logo-wrap {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .auth-logo-img {
+      max-height: 64px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 12px rgba(225, 29, 72, 0.25));
+    }
+
+    .auth-tagline {
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    .auth-input-wrap {
+      position: relative;
+      margin-bottom: 18px;
+    }
+
+    .auth-input-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 38px;
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .auth-input-wrap .form-control {
+      padding-left: 42px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      font-size: 0.92rem;
+    }
+
+    .auth-demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .demo-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .demo-btn:hover {
+      border-color: var(--cherry);
+      color: var(--cherry);
+      background: var(--cherry-light);
+      transform: translateY(-1px);
+    }
+  </style>
 </head>
-<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+<body class="auth-canvas">
 
-  <div style="width: 100%; max-width: 440px; padding: 20px;">
-    <div style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 36px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 1px solid var(--border-color);">
-      
-      <!-- Brand Logo -->
-      <div style="text-align: center; margin-bottom: 24px;">
-        <img src="/static/logo.png" alt="Cherry Blossom Logo" style="max-height: 68px; max-width: 100%; object-fit: contain;">
-        <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 10px; font-weight: 500;">
-          {{ settings.shop_tagline if settings and settings.shop_tagline else 'Cake Shop Management System' }}
-        </p>
-      </div>
-
-      <!-- Error Alert -->
-      {% if error %}
-        <div style="background-color: var(--danger-light); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-          <svg style="width: 18px; height: 18px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          {{ error }}
-        </div>
-      {% endif %}
-
-      <!-- Login Form -->
-      <form action="/login" method="POST">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <div class="form-group" style="text-align: center;">
-          <label class="form-label" for="username" style="display: block; text-align: center;">Username or Email</label>
-          <input type="text" id="username" name="username" class="form-control" placeholder="Enter username / email" value="{{ username or '' }}" required autofocus style="text-align: center;">
-        </div>
-
-        <div class="form-group" style="margin-bottom: 24px; text-align: center;">
-          <label class="form-label" for="password" style="display: block; text-align: center;">Password</label>
-          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required style="text-align: center;">
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 700;">
-          Sign In to Shop ERP
-        </button>
-      </form>
-
-      <!-- Demo Accounts Quick Fill -->
-      <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center;">
-        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 12px;">Quick Demo Accounts</span>
-        <div style="display: flex; gap: 10px; justify-content: center;">
-          <button type="button" class="btn btn-secondary btn-sm" onclick="fillCreds('owner', 'admin123')" style="font-size: 0.8rem;">
-            👑 Owner Demo
-          </button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="fillCreds('staff', 'staff123')" style="font-size: 0.8rem;">
-            👩‍🍳 Staff Demo
-          </button>
-        </div>
-      </div>
-
+  <div class="auth-card">
+    
+    <!-- Brand Header -->
+    <div class="auth-logo-wrap">
+      <img src="/static/logo.png" alt="Cherry Blossom Logo" class="auth-logo-img">
+      <p class="auth-tagline">
+        {{ settings.shop_tagline if settings and settings.shop_tagline else 'Artisanal Patisserie & Bakery ERP' }}
+      </p>
     </div>
+
+    <!-- Error Alert -->
+    {% if error %}
+      <div style="background-color: var(--danger-light); color: var(--danger); border: 1px solid var(--danger-border); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 0.86rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+        <svg style="width: 18px; height: 18px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ error }}</span>
+      </div>
+    {% endif %}
+
+    <!-- Login Form -->
+    <form action="/login" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      
+      <div class="auth-input-wrap">
+        <label class="form-label" for="username">Username or Email</label>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        <input type="text" id="username" name="username" class="form-control" placeholder="admin or staff@bakery.com" value="{{ username or '' }}" required autofocus>
+      </div>
+
+      <div class="auth-input-wrap" style="margin-bottom: 24px;">
+        <label class="form-label" for="password">Password</label>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn btn-cherry btn-lg" style="width: 100%; box-shadow: 0 4px 16px rgba(225, 29, 72, 0.35);">
+        Sign In to Shop ERP
+      </button>
+    </form>
+
+    <!-- Quick Demo Accounts -->
+    <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center;">
+      <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 10px;">
+        Quick Demo Access
+      </span>
+      <div class="auth-demo-grid">
+        <button type="button" class="demo-btn" onclick="fillCreds('owner', 'admin123')">
+          <span>👑</span> Owner Demo
+        </button>
+        <button type="button" class="demo-btn" onclick="fillCreds('staff', 'staff123')">
+          <span>👩‍🍳</span> Staff Demo
+        </button>
+      </div>
+    </div>
+
   </div>
 
   <script>

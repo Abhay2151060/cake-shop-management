@@ -67,7 +67,7 @@
                   </a>
                 </td>
                 <td style="font-size: 0.82rem; color: var(--text-muted);">
-                  {{ ord.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                  {{ (ord.created_at | localtime).strftime('%d %b %Y, %I:%M %p') if ord.created_at else '' }}
                 </td>
                 <td>
                   <div style="font-weight: 600;">{{ ord.customer_name }}</div>

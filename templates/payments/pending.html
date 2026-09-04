@@ -84,7 +84,7 @@
                     {{ ord.order_number }}
                   </a>
                 </td>
-                <td style="font-size: 0.82rem; color: var(--text-muted);">{{ ord.created_at.strftime('%d %b %Y') }}</td>
+                <td style="font-size: 0.82rem; color: var(--text-muted);">{{ (ord.created_at | localtime).strftime('%d %b %Y') if ord.created_at else '' }}</td>
                 <td>
                   <div style="font-weight: 700;">{{ ord.customer_name }}</div>
                   {% if ord.customer_phone %}<div style="font-size: 0.78rem; color: var(--text-muted);">{{ ord.customer_phone }}</div>{% endif %}

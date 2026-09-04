@@ -26,6 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'F9') {
+      const el = document.activeElement;
+      const inField = el && (
+        ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName) || el.isContentEditable
+      );
+      if (inField) return;
       e.preventDefault();
       const submitBtn = document.getElementById('submitOrderBtn');
       if (submitBtn && !submitBtn.disabled) {
@@ -40,9 +45,18 @@ function setupKeyboardShortcuts() {
         searchInput.focus();
         searchInput.select();
       }
+      return;
     }
-    if (e.key === 'Escape' && document.activeElement?.id === 'posProductSearch') {
-      document.activeElement.blur();
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('orderSuccessModal');
+      if (modal) {
+        e.preventDefault();
+        closeSuccessModal();
+        return;
+      }
+      if (document.activeElement?.id === 'posProductSearch') {
+        document.activeElement.blur();
+      }
     }
   });
 }
@@ -449,27 +463,3 @@ function closeSuccessModal() {
   const modal = document.getElementById('orderSuccessModal');
   if (modal) modal.remove();
 }
-
-// Keyboard shortcuts: F9 completes the order, Escape closes the success modal.
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'F9') {
-    // Previously F9 fired even mid-typing in a text field, which could submit a
-    // half-entered order. Ignore it while a form control has focus.
-    const el = document.activeElement;
-    const inField = el && (
-      ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName) || el.isContentEditable
-    );
-    if (inField) return;
-    e.preventDefault();
-    submitOrder();
-    return;
-  }
-
-  if (e.key === 'Escape') {
-    const modal = document.getElementById('orderSuccessModal');
-    if (modal) {
-      e.preventDefault();
-      closeSuccessModal();
-    }
-  }
-});

@@ -49,7 +49,7 @@
               <td>
                 <span class="badge badge-{{ member.status }}">{{ member.status.title() }}</span>
               </td>
-              <td style="font-size: 0.82rem; color: var(--text-muted);">{{ member.created_at.strftime('%d %b %Y') }}</td>
+              <td style="font-size: 0.82rem; color: var(--text-muted);">{{ (member.created_at | localtime).strftime('%d %b %Y') if member.created_at else '' }}</td>
               <td style="text-align: right;">
                 <div style="display: inline-flex; gap: 6px;">
                   <button type="button" class="btn btn-secondary btn-sm"

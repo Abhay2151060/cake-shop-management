@@ -93,7 +93,7 @@
             <tbody>
               {% for p in order.payments %}
                 <tr>
-                  <td>{{ p.payment_date.strftime('%d %b %Y, %I:%M %p') }}</td>
+                  <td>{{ (p.payment_date | localtime).strftime('%d %b %Y, %I:%M %p') if p.payment_date else '' }}</td>
                   <td><span class="badge badge-active">{{ p.payment_method.upper() }}</span></td>
                   <td style="font-weight: 700; color: var(--success);">₹{{ '{:,.2f}'.format(p.amount) }}</td>
                   <td>{{ p.collector.name if p.collector else 'Staff' }}</td>
@@ -128,7 +128,7 @@
 
         <div>
           <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Date Placed</div>
-          <div style="font-weight: 600;">{{ order.created_at.strftime('%A, %d %B %Y at %I:%M %p') }}</div>
+          <div style="font-weight: 600;">{{ (order.created_at | localtime).strftime('%A, %d %B %Y at %I:%M %p') if order.created_at else '' }}</div>
         </div>
 
         <div>

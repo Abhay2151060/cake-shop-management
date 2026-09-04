@@ -140,7 +140,6 @@ async def test_full_application_flow():
         ("/dashboard", "Dashboard / Analytics"),
         ("/orders/pos", "Point of Sale (POS)"),
         ("/orders", "Order History"),
-        ("/orders/current", "Live Kitchen Queue"),
         ("/custom-cakes", "Custom Cake Bookings"),
         ("/custom-cakes/create", "New Custom Cake Form"),
         ("/products", "Product Catalog"),

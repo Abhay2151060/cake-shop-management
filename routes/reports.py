@@ -8,37 +8,43 @@ from sqlalchemy import func
 from database import get_db
 from models import User, Order, OrderItem, Payment, Product, InventoryItem
 from utils.auth_helper import require_owner, get_shop_settings
+from utils.time_helper import local_today, local_day_bounds_utc, local_date_to_utc
 from utils.templating import templates
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 def parse_date_range(period: str, start_date_str: str, end_date_str: str):
-    now = datetime.datetime.now()
-    today = datetime.date.today()
+    today = local_today()
 
     if period == "today":
-        start = datetime.datetime(today.year, today.month, today.day, 0, 0, 0)
-        end = datetime.datetime(today.year, today.month, today.day, 23, 59, 59)
+        start, end = local_day_bounds_utc(today)
     elif period == "yesterday":
         y = today - datetime.timedelta(days=1)
-        start = datetime.datetime(y.year, y.month, y.day, 0, 0, 0)
-        end = datetime.datetime(y.year, y.month, y.day, 23, 59, 59)
+        start, end = local_day_bounds_utc(y)
     elif period == "week":
         start_day = today - datetime.timedelta(days=today.weekday())
-        start = datetime.datetime(start_day.year, start_day.month, start_day.day, 0, 0, 0)
-        end = datetime.datetime(today.year, today.month, today.day, 23, 59, 59)
+        start = local_date_to_utc(start_day, end_of_day=False)
+        end = local_date_to_utc(today, end_of_day=True)
     elif period == "month":
-        start = datetime.datetime(today.year, today.month, 1, 0, 0, 0)
-        end = datetime.datetime(today.year, today.month, today.day, 23, 59, 59)
+        month_first = datetime.date(today.year, today.month, 1)
+        start = local_date_to_utc(month_first, end_of_day=False)
+        end = local_date_to_utc(today, end_of_day=True)
     elif period == "custom" and start_date_str and end_date_str:
-        s_dt = datetime.datetime.strptime(start_date_str, "%Y-%m-%d")
-        e_dt = datetime.datetime.strptime(end_date_str, "%Y-%m-%d")
-        start = datetime.datetime(s_dt.year, s_dt.month, s_dt.day, 0, 0, 0)
-        end = datetime.datetime(e_dt.year, e_dt.month, e_dt.day, 23, 59, 59)
+        try:
+            s_dt = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            e_dt = datetime.datetime.strptime(end_date_str, "%Y-%m-%d").date()
+            start = local_date_to_utc(s_dt, end_of_day=False)
+            end = local_date_to_utc(e_dt, end_of_day=True)
+        except (ValueError, TypeError):
+            month_first = datetime.date(today.year, today.month, 1)
+            start = local_date_to_utc(month_first, end_of_day=False)
+            end = local_date_to_utc(today, end_of_day=True)
+            period = "month"
     else:
         # Default to this month
-        start = datetime.datetime(today.year, today.month, 1, 0, 0, 0)
-        end = datetime.datetime(today.year, today.month, today.day, 23, 59, 59)
+        month_first = datetime.date(today.year, today.month, 1)
+        start = local_date_to_utc(month_first, end_of_day=False)
+        end = local_date_to_utc(today, end_of_day=True)
         period = "month"
 
     return start, end, period

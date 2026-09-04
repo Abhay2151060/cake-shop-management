@@ -116,7 +116,7 @@ def inventory_update(
     purchase_price: float = Form(0.0),
     supplier: str = Form(None),
     expiry_date: str = Form(None),
-    status: str = Form("active"),
+    item_status: str = Form("active", alias="status"),
     user: User = Depends(require_owner),
     db: Session = Depends(get_db)
 ):
@@ -137,7 +137,7 @@ def inventory_update(
     item.purchase_price = max(0.0, float(purchase_price))
     item.supplier = supplier.strip() if supplier else None
     item.expiry_date = expiry_date.strip() if expiry_date else None
-    item.status = status
+    item.status = item_status
 
     db.commit()
 

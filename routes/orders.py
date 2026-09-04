@@ -341,20 +341,6 @@ def orders_list_page(
     })
 
 
-@router.get("/current", response_class=HTMLResponse)
-def current_orders_page(request: Request, user: User = Depends(require_login), db: Session = Depends(get_db)):
-    settings = get_shop_settings(db)
-    # Active orders for staff / kitchen queue
-    orders = db.query(Order).options(selectinload(Order.items)).filter(
-        Order.order_status.in_(["new", "confirmed", "preparing", "ready"])
-    ).order_by(Order.created_at.asc()).limit(200).all()
-
-    return templates.TemplateResponse(request=request, name="orders/current.html", context={
-        "user": user,
-        "settings": settings,
-        "orders": orders
-    })
-
 
 @router.post("/api/{order_id}/status")
 def update_order_status(
@@ -372,7 +358,7 @@ def update_order_status(
     if new_status not in ALLOWED_ORDER_STATUSES:
         return JSONResponse({"success": False, "error": "Invalid status."}, status_code=400)
 
-    # Staff may progress an order through the kitchen queue, but cancelling or
+    # Staff may progress an order's status, but cancelling or
     # reopening a finalised order is an owner action.
     if user.role != "owner":
         if new_status not in STAFF_ALLOWED_STATUSES:

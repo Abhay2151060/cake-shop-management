@@ -8,7 +8,7 @@ from database import get_db
 from models import User, Product, Category, OrderItem
 from utils.auth_helper import require_owner, require_login, get_shop_settings
 from utils.audit_helper import log_activity
-from config import PRODUCT_UPLOAD_DIR
+from config import PRODUCT_UPLOAD_DIR, MAX_UPLOAD_BYTES, ALLOWED_IMAGE_EXTENSIONS
 from utils.templating import templates
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -79,12 +79,18 @@ async def product_create(
     image_rel_path = None
     if product_image and product_image.filename:
         ext = os.path.splitext(product_image.filename)[1].lower()
-        if ext in [".jpg", ".jpeg", ".png", ".webp"]:
-            filename = f"prod_{int(datetime.datetime.now().timestamp())}{ext}"
-            file_path = PRODUCT_UPLOAD_DIR / filename
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(product_image.file, buffer)
-            image_rel_path = f"/static/uploads/products/{filename}"
+        if ext not in ALLOWED_IMAGE_EXTENSIONS:
+            return RedirectResponse(url="/products?error=Invalid+image+format.+Allowed:+JPG,+PNG,+WEBP,+GIF", status_code=status.HTTP_302_FOUND)
+        product_image.file.seek(0, 2)
+        size = product_image.file.tell()
+        product_image.file.seek(0)
+        if size > MAX_UPLOAD_BYTES:
+            return RedirectResponse(url="/products?error=Image+file+size+exceeds+5MB+limit", status_code=status.HTTP_302_FOUND)
+        filename = f"prod_{int(datetime.datetime.now().timestamp())}{ext}"
+        file_path = PRODUCT_UPLOAD_DIR / filename
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(product_image.file, buffer)
+        image_rel_path = f"/static/uploads/products/{filename}"
 
     new_prod = Product(
         name=name.strip(),
@@ -107,7 +113,7 @@ async def product_create(
     return RedirectResponse(url="/products?message=Product+created+successfully", status_code=status.HTTP_302_FOUND)
 
 @router.post("/{product_id}/update")
-async def product_update(
+def product_update(
     product_id: int,
     request: Request,
     name: str = Form(...),
@@ -119,7 +125,7 @@ async def product_update(
     cost_price: float = Form(0.0),
     stock_qty: int = Form(0),
     min_stock_level: int = Form(5),
-    status: str = Form("active"),
+    prod_status: str = Form("active", alias="status"),
     product_image: UploadFile = File(None),
     user: User = Depends(require_owner),
     db: Session = Depends(get_db)
@@ -136,12 +142,18 @@ async def product_update(
 
     if product_image and product_image.filename:
         ext = os.path.splitext(product_image.filename)[1].lower()
-        if ext in [".jpg", ".jpeg", ".png", ".webp"]:
-            filename = f"prod_{int(datetime.datetime.now().timestamp())}{ext}"
-            file_path = PRODUCT_UPLOAD_DIR / filename
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(product_image.file, buffer)
-            prod.image_path = f"/static/uploads/products/{filename}"
+        if ext not in ALLOWED_IMAGE_EXTENSIONS:
+            return RedirectResponse(url="/products?error=Invalid+image+format.+Allowed:+JPG,+PNG,+WEBP,+GIF", status_code=status.HTTP_302_FOUND)
+        product_image.file.seek(0, 2)
+        size = product_image.file.tell()
+        product_image.file.seek(0)
+        if size > MAX_UPLOAD_BYTES:
+            return RedirectResponse(url="/products?error=Image+file+size+exceeds+5MB+limit", status_code=status.HTTP_302_FOUND)
+        filename = f"prod_{int(datetime.datetime.now().timestamp())}{ext}"
+        file_path = PRODUCT_UPLOAD_DIR / filename
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(product_image.file, buffer)
+        prod.image_path = f"/static/uploads/products/{filename}"
 
     prod.name = name.strip()
     prod.category_id = category_id
@@ -152,7 +164,7 @@ async def product_update(
     prod.cost_price = max(0.0, float(cost_price))
     prod.stock_qty = max(0, int(stock_qty))
     prod.min_stock_level = max(0, int(min_stock_level))
-    prod.status = status
+    prod.status = prod_status
 
     db.commit()
 

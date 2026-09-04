@@ -8,7 +8,7 @@ from database import get_db
 from models import User, CustomCakeOrder
 from utils.auth_helper import require_login, get_shop_settings
 from utils.audit_helper import log_activity
-from config import CUSTOM_CAKE_UPLOAD_DIR
+from config import CUSTOM_CAKE_UPLOAD_DIR, MAX_UPLOAD_BYTES, ALLOWED_IMAGE_EXTENSIONS
 from utils.templating import templates
 
 router = APIRouter(prefix="/custom-cakes", tags=["custom_cakes"])
@@ -42,7 +42,7 @@ def custom_cakes_list_page(
             (CustomCakeOrder.theme_design.like(s))
         )
 
-    custom_orders = query.all()
+    custom_orders = query.limit(500).all()
 
     return templates.TemplateResponse(request=request, name="custom_cakes/list.html", context={
         "request": request,
@@ -111,12 +111,34 @@ async def custom_cake_create_submit(
     image_rel_path = None
     if reference_image and reference_image.filename:
         ext = os.path.splitext(reference_image.filename)[1].lower()
-        if ext in [".jpg", ".jpeg", ".png", ".webp"]:
-            filename = f"cc_{int(datetime.datetime.now().timestamp())}{ext}"
-            file_path = CUSTOM_CAKE_UPLOAD_DIR / filename
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(reference_image.file, buffer)
-            image_rel_path = f"/static/uploads/custom_cakes/{filename}"
+        if ext not in ALLOWED_IMAGE_EXTENSIONS:
+            settings = get_shop_settings(db)
+            return templates.TemplateResponse(request=request, name="custom_cakes/create.html", context={
+                "request": request,
+                "user": user,
+                "settings": settings,
+                "today_str": datetime.date.today().strftime("%Y-%m-%d"),
+                "error": "Invalid image format. Allowed: JPG, PNG, WEBP, GIF."
+            }, status_code=400)
+
+        reference_image.file.seek(0, 2)
+        size = reference_image.file.tell()
+        reference_image.file.seek(0)
+        if size > MAX_UPLOAD_BYTES:
+            settings = get_shop_settings(db)
+            return templates.TemplateResponse(request=request, name="custom_cakes/create.html", context={
+                "request": request,
+                "user": user,
+                "settings": settings,
+                "today_str": datetime.date.today().strftime("%Y-%m-%d"),
+                "error": "Image file size exceeds 5MB limit."
+            }, status_code=400)
+
+        filename = f"cc_{int(datetime.datetime.now().timestamp())}{ext}"
+        file_path = CUSTOM_CAKE_UPLOAD_DIR / filename
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(reference_image.file, buffer)
+        image_rel_path = f"/static/uploads/custom_cakes/{filename}"
 
     custom_order_number = generate_custom_cake_number(db)
 
@@ -218,13 +240,20 @@ def settle_custom_cake_payment(
     user: User = Depends(require_login),
     db: Session = Depends(get_db)
 ):
-    order = db.query(CustomCakeOrder).filter(CustomCakeOrder.id == custom_order_id).first()
+    try:
+        amount = round(float(payload.get("amount", 0.0)), 2)
+    except (TypeError, ValueError):
+        return JSONResponse({"success": False, "error": "Payment amount must be a number."}, status_code=400)
+
+    if amount != amount or amount in (float("inf"), float("-inf")):
+        return JSONResponse({"success": False, "error": "Payment amount must be a finite number."}, status_code=400)
+
+    if amount <= 0:
+        return JSONResponse({"success": False, "error": "Amount must be greater than zero."}, status_code=400)
+
+    order = db.query(CustomCakeOrder).filter(CustomCakeOrder.id == custom_order_id).with_for_update().first()
     if not order:
         return JSONResponse({"success": False, "error": "Order not found."}, status_code=404)
-
-    amount = float(payload.get("amount", 0.0))
-    if amount <= 0:
-        return JSONResponse({"success": False, "error": "Amount must be positive."}, status_code=400)
 
     if amount > order.pending_amount:
         return JSONResponse({"success": False, "error": "Amount exceeds pending balance."}, status_code=400)

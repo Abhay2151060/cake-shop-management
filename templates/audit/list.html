@@ -49,7 +49,7 @@
             {% for log in logs %}
               <tr>
                 <td style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
-                  {{ log.created_at.strftime('%d-%b-%Y %I:%M:%S %p') }}
+                  {{ (log.created_at | localtime).strftime('%d-%b-%Y %I:%M:%S %p') if log.created_at else '' }}
                 </td>
                 <td style="font-weight: 700;">{{ log.user_name or 'System' }}</td>
                 <td>
